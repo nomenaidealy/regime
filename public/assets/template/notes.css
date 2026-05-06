@@ -1,0 +1,86 @@
+/* Notes page styles (loaded after template/style.css) */
+
+.notes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.student-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--c-muted);
+  font-size: 13px;
+}
+
+.tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tab-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1.5px solid var(--c-border);
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--c-text);
+  background: var(--c-surface);
+  font-size: 12px;
+  font-weight: 700;
+  transition: all .15s;
+}
+
+.tab-pill:hover {
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+}
+
+.tab-pill.active {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: #fff;
+}
+
+.note-value {
+  font-weight: 700;
+}
+
+.summary-card {
+  margin-top: 14px;
+  background: var(--c-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 16px 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.summary-label {
+  color: var(--c-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 700;
+}
+
+.summary-value {
+  color: var(--c-primary);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.empty-state {
+  padding: 30px 18px;
+  text-align: center;
+  color: var(--c-muted);
+}
