@@ -41,7 +41,7 @@ CREATE TABLE diet (
 );
 
 -- 5. PRIX DES RÉGIMES SELON DURÉE
-CREATE TABLE diet_duree (
+CREATE TABLE diet_prix (
     id      INT PRIMARY KEY AUTO_INCREMENT,
     id_diet INT NOT NULL,
     duree   INT NOT NULL,           -- en jours (ex: 30, 60, 90)
@@ -58,30 +58,28 @@ CREATE TABLE users (
     mdp              VARCHAR(255) NOT NULL,        -- hashé
     taille           DECIMAL(5,2) NOT NULL,        -- en mètres (ex: 1.75)
     poids            DECIMAL(5,2) NOT NULL,        -- en kg
-    is_gold          TINYINT(1)   NOT NULL DEFAULT 0,
-    date_achat_gold  DATETIME     DEFAULT NULL,
     date_inscription DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 7. WALLET (portefeuille)
-CREATE TABLE wallet (
-    id            INT PRIMARY KEY AUTO_INCREMENT,
-    id_user       INT NOT NULL UNIQUE,             -- 1 wallet par user
-    solde         DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE
+--!! pas besoin de durée : 
+CREATE TABLE user_gold_at_time(
+    id          INT PRIMARY KEY AUTO_INCREMENT,
+    id_user     INT NOT NULL,
+    date_achat_gold  DATETIME     DEFAULT NULL,
+    FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE   
 );
 
--- 8. MOUVEMENTS DU PORTEFEUILLE
+
+-- !! pas de wallet
 CREATE TABLE mouvement (
     id             INT PRIMARY KEY AUTO_INCREMENT,
-    id_wallet      INT NOT NULL,
+    id_user         INT NOT NULL,
     montant        DECIMAL(10,2) NOT NULL,
     type           ENUM('CREDIT','DEBIT') NOT NULL,
     montant_apres  DECIMAL(10,2) NOT NULL,         -- solde après opération
     description    VARCHAR(255),                   -- ex: "Code promo ABC123"
     date_mouvement DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_wallet) REFERENCES wallet(id) ON DELETE CASCADE
+    FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- 9. CODE PROMO
@@ -89,7 +87,6 @@ CREATE TABLE code_promo (
     id               INT PRIMARY KEY AUTO_INCREMENT,
     code             VARCHAR(50)   NOT NULL UNIQUE,
     montant          DECIMAL(10,2) NOT NULL,
-    est_utilise      TINYINT(1)    NOT NULL DEFAULT 0,
     id_user_utilise  INT           DEFAULT NULL,
     date_utilisation DATETIME      DEFAULT NULL,
     FOREIGN KEY (id_user_utilise) REFERENCES users(id) ON DELETE SET NULL
@@ -101,6 +98,7 @@ CREATE TABLE user_objectif (
     id_user     INT NOT NULL,
     id_objectif INT NOT NULL,
     date_choix  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    valeur_objectif DECIMAL(5,2) NOT NULL,  -- poids cible en kg ou IMC cible
     FOREIGN KEY (id_user)     REFERENCES users(id)     ON DELETE CASCADE,
     FOREIGN KEY (id_objectif) REFERENCES objectif(id) ON DELETE CASCADE,
     UNIQUE (id_user, id_objectif)
@@ -110,10 +108,10 @@ CREATE TABLE user_objectif (
 CREATE TABLE user_diet (
     id            INT PRIMARY KEY AUTO_INCREMENT,
     id_user       INT NOT NULL,
-    id_diet_duree INT NOT NULL,
+    id_diet_prix INT NOT NULL,
     date_debut    DATE NOT NULL,
     prix_paye     DECIMAL(10,2) NOT NULL,   -- après remise Gold éventuelle
     remise_gold   TINYINT(1)    NOT NULL DEFAULT 0,
     FOREIGN KEY (id_user)       REFERENCES users(id)       ON DELETE CASCADE,
-    FOREIGN KEY (id_diet_duree) REFERENCES diet_duree(id) ON DELETE CASCADE
+    FOREIGN KEY (id_diet_prix) REFERENCES diet_prix(id) ON DELETE CASCADE
 );
