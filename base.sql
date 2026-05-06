@@ -1,0 +1,119 @@
+CREATE DATABASE diet ;
+
+-- ============================================================
+--  BASE DE DONNÉES : APPLICATION RÉGIME ALIMENTAIRE
+-- ============================================================
+
+-- 1. ADMIN
+CREATE TABLE admin (
+    id    INT PRIMARY KEY AUTO_INCREMENT,
+    login VARCHAR(100) NOT NULL UNIQUE,
+    mdp   VARCHAR(100) NOT NULL  -- non hashé selon le cahier
+);
+
+-- 2. OBJECTIF
+CREATE TABLE objectif (
+    id      INT PRIMARY KEY AUTO_INCREMENT,
+    libelle VARCHAR(100) NOT NULL UNIQUE
+    -- 'Augmenter son poids', 'Réduire son poids', 'Atteindre son IMC idéal'
+);
+
+-- 3. SPORT
+CREATE TABLE sport (
+    id                     INT PRIMARY KEY AUTO_INCREMENT,
+    libelle                VARCHAR(100) NOT NULL,
+    description            TEXT,
+    variation_poids_seance DECIMAL(5,2) NOT NULL  -- en kg, + ou -
+);
+
+-- 4. DIET (régime)
+CREATE TABLE diet (
+    id                  INT PRIMARY KEY AUTO_INCREMENT,
+    nom                 VARCHAR(100) NOT NULL,
+    description         TEXT,
+    variation_poids_jour DECIMAL(5,2) NOT NULL,  -- en kg/jour, + ou -
+    viande_percent      INT NOT NULL CHECK (viande_percent >= 0),
+    volaille_percent    INT NOT NULL CHECK (volaille_percent >= 0),
+    poisson_percent     INT NOT NULL CHECK (poisson_percent >= 0),
+    id_sport            INT,
+    FOREIGN KEY (id_sport) REFERENCES sport(id) ON DELETE SET NULL,
+    CONSTRAINT chk_percent CHECK (viande_percent + volaille_percent + poisson_percent = 100)
+);
+
+-- 5. PRIX DES RÉGIMES SELON DURÉE
+CREATE TABLE diet_duree (
+    id      INT PRIMARY KEY AUTO_INCREMENT,
+    id_diet INT NOT NULL,
+    duree   INT NOT NULL,           -- en jours (ex: 30, 60, 90)
+    prix    DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (id_diet) REFERENCES diet(id) ON DELETE CASCADE,
+    UNIQUE (id_diet, duree)
+);
+
+CREATE TABLE users (
+    id               INT PRIMARY KEY AUTO_INCREMENT,
+    nom              VARCHAR(100) NOT NULL,
+    email            VARCHAR(150) NOT NULL UNIQUE,
+    genre            ENUM('Homme','Femme') NOT NULL,
+    mdp              VARCHAR(255) NOT NULL,        -- hashé
+    taille           DECIMAL(5,2) NOT NULL,        -- en mètres (ex: 1.75)
+    poids            DECIMAL(5,2) NOT NULL,        -- en kg
+    is_gold          TINYINT(1)   NOT NULL DEFAULT 0,
+    date_achat_gold  DATETIME     DEFAULT NULL,
+    date_inscription DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 7. WALLET (portefeuille)
+CREATE TABLE wallet (
+    id            INT PRIMARY KEY AUTO_INCREMENT,
+    id_user       INT NOT NULL UNIQUE,             -- 1 wallet par user
+    solde         DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 8. MOUVEMENTS DU PORTEFEUILLE
+CREATE TABLE mouvement (
+    id             INT PRIMARY KEY AUTO_INCREMENT,
+    id_wallet      INT NOT NULL,
+    montant        DECIMAL(10,2) NOT NULL,
+    type           ENUM('CREDIT','DEBIT') NOT NULL,
+    montant_apres  DECIMAL(10,2) NOT NULL,         -- solde après opération
+    description    VARCHAR(255),                   -- ex: "Code promo ABC123"
+    date_mouvement DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_wallet) REFERENCES wallet(id) ON DELETE CASCADE
+);
+
+-- 9. CODE PROMO
+CREATE TABLE code_promo (
+    id               INT PRIMARY KEY AUTO_INCREMENT,
+    code             VARCHAR(50)   NOT NULL UNIQUE,
+    montant          DECIMAL(10,2) NOT NULL,
+    est_utilise      TINYINT(1)    NOT NULL DEFAULT 0,
+    id_user_utilise  INT           DEFAULT NULL,
+    date_utilisation DATETIME      DEFAULT NULL,
+    FOREIGN KEY (id_user_utilise) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- 10. OBJECTIF CHOISI PAR L'UTILISATEUR
+CREATE TABLE user_objectif (
+    id          INT PRIMARY KEY AUTO_INCREMENT,
+    id_user     INT NOT NULL,
+    id_objectif INT NOT NULL,
+    date_choix  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_user)     REFERENCES users(id)     ON DELETE CASCADE,
+    FOREIGN KEY (id_objectif) REFERENCES objectif(id) ON DELETE CASCADE,
+    UNIQUE (id_user, id_objectif)
+);
+
+-- 11. SOUSCRIPTION D'UN RÉGIME PAR UN UTILISATEUR
+CREATE TABLE user_diet (
+    id            INT PRIMARY KEY AUTO_INCREMENT,
+    id_user       INT NOT NULL,
+    id_diet_duree INT NOT NULL,
+    date_debut    DATE NOT NULL,
+    prix_paye     DECIMAL(10,2) NOT NULL,   -- après remise Gold éventuelle
+    remise_gold   TINYINT(1)    NOT NULL DEFAULT 0,
+    FOREIGN KEY (id_user)       REFERENCES users(id)       ON DELETE CASCADE,
+    FOREIGN KEY (id_diet_duree) REFERENCES diet_duree(id) ON DELETE CASCADE
+);
