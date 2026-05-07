@@ -38,7 +38,7 @@ class User extends BaseController
 
     public function loginPage()
     {
-        return view('login');
+        return view('/template/user/login');
     }
 
     public function login()
