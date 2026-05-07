@@ -13,7 +13,15 @@ INSERT INTO sport (libelle, description, variation_poids_seance) VALUES
 -- =========================
 -- 2. DIETS
 -- =========================
-INSERT INTO diet (nom, description, variation_poids_jour, viande_percent, volaille_percent, poisson_percent, id_sport) VALUES
+INSERT INTO diet (
+    nom,
+    description,
+    variation_poids_jour,
+    viande_percent,
+    volaille_percent,
+    poisson_percent,
+    id_sport
+) VALUES
 ('Régime Perte Rapide', 'Régime hypocalorique pour perte rapide', -0.10, 40, 30, 30, 1),
 ('Régime Équilibré', 'Apport équilibré', -0.02, 33, 34, 33, 2),
 ('Régime Protéiné', 'Riche en protéines', 0.03, 50, 25, 25, 2),
@@ -45,13 +53,21 @@ INSERT INTO objectif (libelle) VALUES
 
 -- =========================
 -- 5. USERS
+-- Mot de passe NON hashé
 -- =========================
-INSERT INTO users (nom, email, genre, mdp, taille, poids) VALUES
-('Alice Martin', 'alice@example.com', 'Femme', '$2y$10$hash1', 1.65, 68.00),
-('Bob Dupont', 'bob@example.com', 'Homme', '$2y$10$hash2', 1.80, 85.00),
-('Chloé Bernard', 'chloe@example.com', 'Femme', '$2y$10$hash3', 1.60, 54.00),
-('David Moreau', 'david@example.com', 'Homme', '$2y$10$hash4', 1.75, 77.50),
-('Eva Simon', 'eva@example.com', 'Femme', '$2y$10$hash5', 1.70, 62.00);
+INSERT INTO users (
+    nom,
+    email,
+    genre,
+    mdp,
+    taille,
+    poids
+) VALUES
+('Alice Martin', 'alice@example.com', 'Femme', 'alice123', 1.65, 68.00),
+('Bob Dupont', 'bob@example.com', 'Homme', 'bob123', 1.80, 85.00),
+('Chloé Bernard', 'chloe@example.com', 'Femme', 'chloe123', 1.60, 54.00),
+('David Moreau', 'david@example.com', 'Homme', 'david123', 1.75, 77.50),
+('Eva Simon', 'eva@example.com', 'Femme', 'eva123', 1.70, 62.00);
 
 -- =========================
 -- 6. GOLD (historique)
@@ -63,7 +79,13 @@ INSERT INTO user_gold_at_time (id_user, date_achat_gold) VALUES
 -- =========================
 -- 7. MOUVEMENTS
 -- =========================
-INSERT INTO mouvement (id_user, montant, type, montant_apres, description) VALUES
+INSERT INTO mouvement (
+    id_user,
+    montant,
+    type,
+    montant_apres,
+    description
+) VALUES
 (2, 50.00, 'CREDIT', 50.00, 'Recharge initiale'),
 (3, 10.00, 'CREDIT', 10.00, 'Recharge initiale'),
 (5, 100.00, 'CREDIT', 100.00, 'Recharge initiale');
@@ -91,7 +113,11 @@ INSERT INTO code_promo (code, montant) VALUES
 -- =========================
 -- 9. USER_OBJECTIF
 -- =========================
-INSERT INTO user_objectif (id_user, id_objectif, valeur_objectif) VALUES
+INSERT INTO user_objectif (
+    id_user,
+    id_objectif,
+    valeur_objectif
+) VALUES
 (1, 2, 60.00),
 (2, 3, 22.00),
 (3, 1, 65.00);
@@ -99,7 +125,13 @@ INSERT INTO user_objectif (id_user, id_objectif, valeur_objectif) VALUES
 -- =========================
 -- 10. USER_DIET
 -- =========================
-INSERT INTO user_diet (id_user, id_diet_prix, date_debut, prix_paye, remise_gold) VALUES
+INSERT INTO user_diet (
+    id_user,
+    id_diet_prix,
+    date_debut,
+    prix_paye,
+    remise_gold
+) VALUES
 (2, 2, '2026-04-02', 42.49, 1),
 (5, 1, '2026-03-16', 29.99, 1),
 (1, 4, '2026-04-15', 24.99, 0);
