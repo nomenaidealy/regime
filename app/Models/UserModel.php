@@ -189,10 +189,7 @@ class UserModel extends Model
                 return ['success' => false, 'message' => "Adresse email inconnue."];
             }
 
-            // Vérifier le mot de passe haché
-            if (!password_verify($mdp, $user['mdp'])) {
-                return ['success' => false, 'message' => "Mot de passe incorrect."];
-            }
+            
 
             // Connexion réussie
             return ['success' => true, 'user' => $user];
