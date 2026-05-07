@@ -16,12 +16,12 @@ class UserModel extends Model
         
     ];
 
-    // Validation
+    
     protected $validationRules = [
         'nom'    => 'required|min_length[3]|max_length[100]',
         'email'  => 'required|valid_email|is_unique[users.email]',
         'mdp'    => 'required|min_length[6]',
-        'genre'  => 'required|in_list[Homme,Femme]', // ← retiré "Autre" car ENUM('Homme','Femme')
+        'genre'  => 'required|in_list[Homme,Femme]', 
         'taille' => 'required|numeric|greater_than[0]',
         'poids'  => 'required|numeric|greater_than[0]',
     ];

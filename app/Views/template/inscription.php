@@ -55,6 +55,7 @@
       <input type="hidden" name="poids"    id="hidden_poids">
       <input type="hidden" name="objectif" id="hidden_objectif">
       <input type="hidden" name="mdp"      id="hidden_mdp">
+      <input type="hidden" name="valeur_objectif" id="hidden_valeur_objectif">
     <!-- progress dots -->
   <div class="progress-dots" id="progressDots">
     <div class="dot active"></div>
@@ -166,6 +167,17 @@
             </div>
           </label>
         </div>
+        <!-- Champ kg qui apparaît selon l'objectif choisi -->
+<div class="field" id="fieldKg" style="display:none;">
+  <label id="labelKg">Combien de kg ?</label>
+  <input type="number" id="valeur_objectif" placeholder="Ex: 10" min="1" max="100" step="0.5">
+  <div class="err-msg">Veuillez entrer un nombre de kg valide</div>
+</div>
+
+<!-- Message IMC idéal -->
+<div id="msgImcIdeal" style="display:none; background:var(--cream-dk); border-radius:var(--radius); padding:14px 18px; margin-top:12px; font-size:13px; color:var(--text-muted);">
+  <i class="bi bi-info-circle"></i> L'objectif sera calculé automatiquement selon votre IMC idéal.
+</div>
       </div>
     </div>
 
@@ -238,29 +250,29 @@ function validate(step) {
     if (!genre) { alert('Veuillez sélectionner votre genre.'); ok = false; }
   }
 
-  if (step === 2) {
-    const taille = document.getElementById('taille');
-    const poids  = document.getElementById('poids');
-    const obj    = document.querySelector('input[name="objectif"]:checked');
+if (step === 2) {
+  const taille   = document.getElementById('taille');
+  const poids    = document.getElementById('poids');
+  const obj      = document.querySelector('input[name="objectif"]:checked');
+  const valeurKg = document.getElementById('valeur_objectif');
 
-    if (!taille.value || taille.value < 1 || taille.value > 2.5) { taille.classList.add('error'); ok = false; }
-    else taille.classList.remove('error');
+  if (!taille.value || taille.value < 1 || taille.value > 2.5) {
+    taille.classList.add('error'); ok = false;
+  } else taille.classList.remove('error');
 
-    if (!poids.value || poids.value < 20 || poids.value > 300) { poids.classList.add('error'); ok = false; }
-    else poids.classList.remove('error');
+  if (!poids.value || poids.value < 20 || poids.value > 300) {
+    poids.classList.add('error'); ok = false;
+  } else poids.classList.remove('error');
 
-    if (!obj) { alert('Veuillez choisir votre objectif.'); ok = false; }
+  if (!obj) { alert('Veuillez choisir votre objectif.'); ok = false; }
+
+  // Si objectif 1 ou 2 → kg obligatoire
+  if (obj && (obj.value === '1' || obj.value === '2')) {
+    if (!valeurKg.value || valeurKg.value < 1) {
+      valeurKg.classList.add('error'); ok = false;
+    } else valeurKg.classList.remove('error');
   }
-
-  if (step === 3) {
-    const mdp        = document.getElementById('mdp');
-    
-
-    if (mdp.value.length < 6) { mdp.classList.add('error'); ok = false; }
-    else mdp.classList.remove('error');
-
-  
-  }
+}
 
   return ok;
 }
@@ -287,26 +299,31 @@ function updateLeftSteps() {
     else dot.innerHTML = s;
   });
 }
-
 function submit() {
   if (!validate(3)) return;
 
-  // Stocker toutes les valeurs dans les champs cachés
-  document.getElementById('hidden_nom').value      = document.getElementById('nom').value;
-  document.getElementById('hidden_email').value    = document.getElementById('email').value;
-  document.getElementById('hidden_taille').value   = document.getElementById('taille').value;
-  document.getElementById('hidden_poids').value    = document.getElementById('poids').value;
-  document.getElementById('hidden_mdp').value      = document.getElementById('mdp').value;
+  document.getElementById('hidden_nom').value    = document.getElementById('nom').value;
+  document.getElementById('hidden_email').value  = document.getElementById('email').value;
+  document.getElementById('hidden_taille').value = document.getElementById('taille').value;
+  document.getElementById('hidden_poids').value  = document.getElementById('poids').value;
+  document.getElementById('hidden_mdp').value    = document.getElementById('mdp').value;
 
-  // Genre (radio)
+  // Genre
   const genre = document.querySelector('input[name="genre"]:checked');
   if (genre) document.getElementById('hidden_genre').value = genre.value;
 
-  // Objectif (radio)
+  // Objectif
   const objectif = document.querySelector('input[name="objectif"]:checked');
   if (objectif) document.getElementById('hidden_objectif').value = objectif.value;
 
-  // Soumettre vers CodeIgniter
+  // ← MANQUANT dans votre version !
+  const valeurKg = document.getElementById('valeur_objectif');
+  if (objectif && (objectif.value === '1' || objectif.value === '2')) {
+    document.getElementById('hidden_valeur_objectif').value = valeurKg.value;
+  } else {
+    document.getElementById('hidden_valeur_objectif').value = '0'; // calculé côté serveur
+  }
+
   document.getElementById('inscriptionForm').submit();
 }
 function togglePwd(id, btn) {
@@ -335,10 +352,40 @@ function calcIMC() {
   } else {
     preview.style.display = 'none';
   }
+
+  
 }
 
 document.getElementById('taille').addEventListener('input', calcIMC);
 document.getElementById('poids').addEventListener('input', calcIMC);
+
+
+// Ajouter après calcIMC()
+document.querySelectorAll('input[name="objectif"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    const fieldKg      = document.getElementById('fieldKg');
+    const msgImcIdeal  = document.getElementById('msgImcIdeal');
+    const labelKg      = document.getElementById('labelKg');
+
+    if (this.value === '1') {
+      // Augmenter son poids
+      fieldKg.style.display     = 'block';
+      msgImcIdeal.style.display = 'none';
+      labelKg.textContent       = 'Combien de kg voulez-vous prendre ?';
+    } else if (this.value === '2') {
+      // Réduire son poids
+      fieldKg.style.display     = 'block';
+      msgImcIdeal.style.display = 'none';
+      labelKg.textContent       = 'Combien de kg voulez-vous perdre ?';
+    } else if (this.value === '3') {
+      // IMC idéal → calculé automatiquement
+      fieldKg.style.display     = 'none';
+      msgImcIdeal.style.display = 'block';
+    }
+  });
+});
 </script>
+
+
 
 <?= $this->endSection() ?>
