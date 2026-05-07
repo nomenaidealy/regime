@@ -45,11 +45,25 @@ class UserModel extends Model
     }
       public function verifyUser(string $email, string $mdp)
     {
-        $user = $this->where('email', $email)->first();
-        if ($user && $user['mdp'] === $mdp) {
-            return $user;
+        try {
+            $user = $this->where('email', $email)->first();
+
+            if (!$user) {
+                // Email non trouvé
+                return ['success' => false, 'message' => "Adresse email inconnue."];
+            }
+
+            if ($user['mdp'] !== $mdp) {
+                // Mot de passe incorrect
+                return ['success' => false, 'message' => "Mot de passe incorrect."];
+            }
+
+            // Connexion réussie
+            return ['success' => true, 'user' => $user];
+        } catch (\Exception $e) {
+            // Erreur technique
+            return ['success' => false, 'message' => "Erreur technique : " . $e->getMessage()];
         }
-        return null;
     }
     // Vérifier si un user est Gold
     public function isGold(int $userId): bool
