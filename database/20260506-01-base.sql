@@ -1,5 +1,7 @@
 CREATE DATABASE diet ;
 
+use diet;
+
 -- ============================================================
 --  BASE DE DONNÉES : APPLICATION RÉGIME ALIMENTAIRE
 -- ============================================================
