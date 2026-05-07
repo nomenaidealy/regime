@@ -3,7 +3,11 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
+use App\Models\UserObjectifModel;
+use App\Models\CodePromoModel;
+use App\Models\MouvementModel;
 use CodeIgniter\Controller;
+
 
 class UserController extends Controller
 {
@@ -14,71 +18,175 @@ class UserController extends Controller
     {
         return view('template/inscription');
     }
+
+      protected $userModel;
+    protected $objectifModel;
+    protected $promoModel;
+    protected $mouvementModel;
+
+    public function __construct()
+    {
+        $this->userModel     = new UserModel();
+        $this->objectifModel = new UserObjectifModel();
+        $this->promoModel    = new CodePromoModel();
+        $this->mouvementModel= new MouvementModel();
+    }
+
+    // =========================
+    // INSCRIPTION - WIZARD AJAX
+    // =========================
+
+    /**
+     * Endpoint AJAX - Valide l'étape 1 du wizard (infos personnelles)
+     */
+    public function validateStep1()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
+        }
+
+        $data = [
+            'nom'   => $this->request->getPost('nom'),
+            'email' => $this->request->getPost('email'),
+            'genre' => $this->request->getPost('genre'),
+        ];
+
+        $result = $this->userModel->validateStep1($data);
+
+        if ($result['valid']) {
+            return $this->response->setJSON(['success' => true]);
+        }
+
+        return $this->response->setJSON(['success' => false, 'errors' => $result['errors']]);
+    }
+
+    /**
+     * Endpoint AJAX - Valide l'étape 2 du wizard (infos santé)
+     */
+    public function validateStep2()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
+        }
+
+        $data = [
+            'taille'  => $this->request->getPost('taille'),
+            'poids'   => $this->request->getPost('poids'),
+            'objectif' => $this->request->getPost('objectif'),
+        ];
+
+        $result = $this->userModel->validateStep2($data);
+
+        if ($result['valid']) {
+            return $this->response->setJSON(['success' => true]);
+        }
+
+        return $this->response->setJSON(['success' => false, 'errors' => $result['errors']]);
+    }
+
+    /**
+     * Endpoint AJAX - Valide l'étape 3 du wizard (sécurité)
+     */
+    public function validateStep3()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
+        }
+
+        $data = [
+            'mdp'          => $this->request->getPost('mdp'),
+            'mdp_confirm'  => $this->request->getPost('mdp_confirm'),
+        ];
+
+        $result = $this->userModel->validateStep3($data);
+
+        if ($result['valid']) {
+            return $this->response->setJSON(['success' => true]);
+        }
+
+        return $this->response->setJSON(['success' => false, 'errors' => $result['errors']]);
+    }
+
+    /**
+     * Endpoint AJAX - Finalise l'inscription (création de l'utilisateur)
+     */
+    public function completeInscription()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
+        }
+
+        $data = [
+            'nom'    => $this->request->getPost('nom'),
+            'email'  => $this->request->getPost('email'),
+            'genre'  => $this->request->getPost('genre'),
+            'taille' => $this->request->getPost('taille'),
+            'poids'  => $this->request->getPost('poids'),
+            'mdp'    => $this->request->getPost('mdp'),
+        ];
+
+        // Crée l'utilisateur
+        $userId = $this->userModel->createUser($data);
+
+        if (!$userId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Erreur lors de la création']);
+        }
+
+        // Ajoute l'objectif
+        $this->objectifModel->insertObjectif(
+            $userId,
+            $this->request->getPost('objectif'),
+            $this->request->getPost('valeur_objectif')
+        );
+
+        // Crée la session
+        session()->set([
+            'user_id'    => $userId,
+            'user_nom'   => $data['nom'],
+            'isLoggedIn' => true
+        ]);
+
+        return $this->response->setJSON(['success' => true, 'redirect' => 'dashboard']);
+    }
+
+    /**
+     * (Ancien endpoint - conservation pour compatibilité temporaire)
+     */
     public function saveUser()
     {
-        $userModel = new UserModel();
-        $email     = $this->request->getPost('email');
-
-        // Email déjà utilisé ?
-        if ($userModel->where('email', $email)->first()) {
-            return redirect()->to('inscription')
-                ->with('error', 'Cet email est déjà utilisé.');
-        }
-
-        $nom             = $this->request->getPost('nom');
-        $genre           = $this->request->getPost('genre');
-        $taille          = $this->request->getPost('taille');
-        $poids           = $this->request->getPost('poids');
-        $mdp             = $this->request->getPost('mdp');
-        $objectif        = $this->request->getPost('objectif');
-        $valeurObjectif  = $this->request->getPost('valeur_objectif');
-
-        // Si objectif = IMC idéal (3) → calculer automatiquement
-        if ($objectif == 3) {
-            $tailleEnCm = $taille * 100;
-            if ($genre == 'Femme') {
-                $poidsIdeal = $tailleEnCm - 100 - (($tailleEnCm - 150) / 2.5);
-            } else {
-                $poidsIdeal = $tailleEnCm - 100 - (($tailleEnCm - 150) / 4);
-            }
-            $valeurObjectif = round(abs($poids - $poidsIdeal), 2);
-        }
-        // Objectif 1 ou 2 → valeur saisie par l'utilisateur (déjà dans $valeurObjectif)
-
-        // Insert user
-        $userModel->insert([
-            'nom'    => $nom,
-            'email'  => $email,
-            'genre'  => $genre,
-            'taille' => $taille,
-            'poids'  => $poids,
-            'mdp'    => password_hash($mdp, PASSWORD_DEFAULT),
-        ]);
-
-        $userId = $userModel->getInsertID();
-        $db     = \Config\Database::connect();
-
-        // Insert objectif
-        $db->table('user_objectif')->insert([
-            'id_user'         => $userId,
-            'id_objectif'     => $objectif,
-            'date_choix'      => date('Y-m-d H:i:s'),
-            'valeur_objectif' => $valeurObjectif,
-        ]);
-
-        // Session
-        session()->set([
-            'isLoggedIn' => true,
-            'user_id'    => $userId,
-            'user_nom'   => $nom,
-            'user_genre' => $genre,
-            'is_gold'    => false,
-            'solde'      => 0.00,
-        ]);
-
-        return redirect()->to('dashboard')
-            ->with('success', 'Bienvenue sur NutriPlan, ' . $nom . ' !');
+        return redirect()->to('inscription');
     }
+
+    // =========================
+    // WALLET
+    // =========================
+    public function rechargerWallet()
+    {
+        $userId = session()->get('user_id');
+        $code   = $this->request->getPost('code');
+
+        $promo = $this->promoModel->getValidCode($code);
+
+        if (!$promo) {
+            return redirect()->back()->with('error', 'Code invalide');
+        }
+
+        $solde = $this->userModel->getSolde($userId);
+        $newSolde = $solde + $promo['montant'];
+
+        $this->mouvementModel->addCredit(
+            $userId,
+            $promo['montant'],
+            $newSolde,
+            "Code promo $code"
+        );
+
+        $this->promoModel->markUsed($promo['id'], $userId);
+
+        session()->set('solde', $newSolde);
+
+        return redirect()->back()->with('success', 'Rechargé');
+    }    
 
     // ─────────────────────────────────────────
     // LOGIN
@@ -183,56 +291,4 @@ class UserController extends Controller
         ]);
     }
 
-    // ─────────────────────────────────────────
-    // RECHARGER WALLET avec code promo
-    // ─────────────────────────────────────────
-    public function rechargerWallet()
-    {
-        $userId = session()->get('user_id');
-        $code   = $this->request->getPost('code');
-        $db     = \Config\Database::connect();
-
-        // Vérifier si code existe et non utilisé
-        $codePromo = $db->table('code_promo')
-            ->where('code', $code)
-            ->where('id_user_utilise', null)
-            ->get()->getRow();
-
-        if (!$codePromo) {
-            return redirect()->back()
-                ->with('error', 'Code invalide ou déjà utilisé.');
-        }
-
-        // Solde actuel
-        $dernierMouvement = $db->table('mouvement')
-            ->where('id_user', $userId)
-            ->orderBy('date_mouvement', 'DESC')
-            ->limit(1)
-            ->get()->getRow();
-        $soldeCourant = $dernierMouvement ? (float)$dernierMouvement->montant_apres : 0.00;
-        $nouveauSolde = $soldeCourant + $codePromo->montant;
-
-        // Enregistrer mouvement CREDIT
-        $db->table('mouvement')->insert([
-            'id_user'      => $userId,
-            'montant'      => $codePromo->montant,
-            'type'         => 'CREDIT',
-            'montant_apres' => $nouveauSolde,
-            'description'  => 'Code promo : ' . $code,
-        ]);
-
-        // Marquer code utilisé
-        $db->table('code_promo')
-            ->where('id', $codePromo->id)
-            ->update([
-                'id_user_utilise'  => $userId,
-                'date_utilisation' => date('Y-m-d H:i:s'),
-            ]);
-
-        // Mettre à jour session
-        session()->set('solde', $nouveauSolde);
-
-        return redirect()->back()
-            ->with('success', 'Portefeuille rechargé de ' . number_format($codePromo->montant, 0, ',', ' ') . ' Ar !');
-    }
 }

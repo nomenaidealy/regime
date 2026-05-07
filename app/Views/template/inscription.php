@@ -202,6 +202,15 @@
       <div class="err-msg">Minimum 6 caractères</div>
     </div>
 
+    <div class="field">
+      <label>Confirmer le mot de passe</label>
+      <div class="pwd-wrapper">
+        <input type="password" id="mdp_confirm" placeholder="Confirmez votre mot de passe">
+        <button class="pwd-toggle" onclick="togglePwd('mdp_confirm', this)"><i class="bi bi-eye"></i></button>
+      </div>
+      <div class="err-msg">Les mots de passe ne correspondent pas</div>
+    </div>
+
     
 
     <button class="btn-next" onclick="submit()"><i class="bi bi-balloon-heart"></i> Créer mon compte</button>
@@ -222,7 +231,7 @@
 let currentStep = 1;
 
 function goTo(step) {
-  if (step > currentStep && !validate(currentStep)) return;
+  if (step > currentStep && !validateAndProceed(currentStep)) return;
 
   document.getElementById('step' + currentStep).classList.remove('active');
   currentStep = step;
@@ -232,49 +241,101 @@ function goTo(step) {
   updateLeftSteps();
 }
 
-function validate(step) {
-  let ok = true;
-
+/**
+ * Fonction utilitaire pour afficher les erreurs
+ */
+function displayErrors(step, errors) {
   if (step === 1) {
-    const nom   = document.getElementById('nom');
-    const email = document.getElementById('email');
-    const genre = document.querySelector('input[name="genre"]:checked');
-
-    if (!nom.value.trim()) { nom.classList.add('error'); ok = false; }
-    else nom.classList.remove('error');
-
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRe.test(email.value)) { email.classList.add('error'); ok = false; }
-    else email.classList.remove('error');
-
-    if (!genre) { alert('Veuillez sélectionner votre genre.'); ok = false; }
-  }
-
-if (step === 2) {
-  const taille   = document.getElementById('taille');
-  const poids    = document.getElementById('poids');
-  const obj      = document.querySelector('input[name="objectif"]:checked');
-  const valeurKg = document.getElementById('valeur_objectif');
-
-  if (!taille.value || taille.value < 1 || taille.value > 2.5) {
-    taille.classList.add('error'); ok = false;
-  } else taille.classList.remove('error');
-
-  if (!poids.value || poids.value < 20 || poids.value > 300) {
-    poids.classList.add('error'); ok = false;
-  } else poids.classList.remove('error');
-
-  if (!obj) { alert('Veuillez choisir votre objectif.'); ok = false; }
-
-  // Si objectif 1 ou 2 → kg obligatoire
-  if (obj && (obj.value === '1' || obj.value === '2')) {
-    if (!valeurKg.value || valeurKg.value < 1) {
-      valeurKg.classList.add('error'); ok = false;
-    } else valeurKg.classList.remove('error');
+    clearStepErrors(1);
+    if (errors.nom) document.querySelector('#step1 #nom + .err-msg').textContent = errors.nom;
+    if (errors.email) document.querySelector('#step1 #email + .err-msg').textContent = errors.email;
+    if (errors.genre) alert(errors.genre);
+  } else if (step === 2) {
+    clearStepErrors(2);
+    if (errors.taille) document.querySelector('#step2 #taille + .err-msg').textContent = errors.taille;
+    if (errors.poids) document.querySelector('#step2 #poids + .err-msg').textContent = errors.poids;
+    if (errors.objectif) alert(errors.objectif);
+  } else if (step === 3) {
+    clearStepErrors(3);
+    if (errors.mdp) {
+      const mdpField = document.querySelector('#step3 #mdp');
+      if (mdpField) mdpField.parentElement.nextElementSibling.textContent = errors.mdp;
+    }
+    if (errors.mdp_confirm) {
+      const mdpConfirmField = document.querySelector('#step3 #mdp_confirm');
+      if (mdpConfirmField) mdpConfirmField.parentElement.nextElementSibling.textContent = errors.mdp_confirm;
+    }
   }
 }
 
-  return ok;
+/**
+ * Efface les erreurs affichées pour une étape
+ */
+function clearStepErrors(step) {
+  document.querySelectorAll(`#step${step} .err-msg`).forEach(el => {
+    el.textContent = el.dataset.original || 'Champ invalide';
+  });
+}
+
+/**
+ * Validation via AJAX pour l'étape en cours
+ */
+async function validateAndProceed(step) {
+  let data = new FormData();
+  
+  if (step === 1) {
+    data.append('nom', document.getElementById('nom').value);
+    data.append('email', document.getElementById('email').value);
+    data.append('genre', document.querySelector('input[name="genre"]:checked')?.value || '');
+
+    const response = await fetch('<?= base_url("api/validate-step1") ?>', {
+      method: 'POST',
+      body: data,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+
+    const result = await response.json();
+    if (!result.success) {
+      displayErrors(1, result.errors);
+      return false;
+    }
+    return true;
+  }
+
+  if (step === 2) {
+    data.append('taille', document.getElementById('taille').value);
+    data.append('poids', document.getElementById('poids').value);
+    data.append('objectif', document.querySelector('input[name="objectif"]:checked')?.value || '');
+
+    const response = await fetch('<?= base_url("api/validate-step2") ?>', {
+      method: 'POST',
+      body: data,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+
+    const result = await response.json();
+    if (!result.success) {
+      displayErrors(2, result.errors);
+      return false;
+    }
+    return true;
+  }
+
+  if (step === 3) {
+    // Validation côté client pour l'étape 3 (pas d'AJAX, juste vérifier que c'est rempli)
+    const mdp = document.getElementById('mdp').value;
+    if (!mdp || mdp.length < 6) {
+      alert('Le mot de passe doit contenir au minimum 6 caractères');
+      return false;
+    }
+    return true;
+  }
+
+  return true;
 }
 
 function updateProgress() {
@@ -299,33 +360,65 @@ function updateLeftSteps() {
     else dot.innerHTML = s;
   });
 }
-function submit() {
-  if (!validate(3)) return;
 
-  document.getElementById('hidden_nom').value    = document.getElementById('nom').value;
-  document.getElementById('hidden_email').value  = document.getElementById('email').value;
-  document.getElementById('hidden_taille').value = document.getElementById('taille').value;
-  document.getElementById('hidden_poids').value  = document.getElementById('poids').value;
-  document.getElementById('hidden_mdp').value    = document.getElementById('mdp').value;
+/**
+ * Soumet le formulaire complet avec AJAX
+ */
+async function submit() {
+  // Validation finale étape 3
+  if (!await validateAndProceed(3)) return;
 
-  // Genre
-  const genre = document.querySelector('input[name="genre"]:checked');
-  if (genre) document.getElementById('hidden_genre').value = genre.value;
+  // Préparer les données
+  const mdp = document.getElementById('mdp').value;
+  const mdpConfirm = document.getElementById('mdp_confirm').value;
 
-  // Objectif
-  const objectif = document.querySelector('input[name="objectif"]:checked');
-  if (objectif) document.getElementById('hidden_objectif').value = objectif.value;
+  // Validation étape 3 complète (mdp + confirmation)
+  let step3Data = new FormData();
+  step3Data.append('mdp', mdp);
+  step3Data.append('mdp_confirm', mdpConfirm);
 
-  // ← MANQUANT dans votre version !
-  const valeurKg = document.getElementById('valeur_objectif');
-  if (objectif && (objectif.value === '1' || objectif.value === '2')) {
-    document.getElementById('hidden_valeur_objectif').value = valeurKg.value;
-  } else {
-    document.getElementById('hidden_valeur_objectif').value = '0'; // calculé côté serveur
+  const step3Response = await fetch('<?= base_url("api/validate-step3") ?>', {
+    method: 'POST',
+    body: step3Data,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  });
+
+  const step3Result = await step3Response.json();
+  if (!step3Result.success) {
+    displayErrors(3, step3Result.errors);
+    return;
   }
 
-  document.getElementById('inscriptionForm').submit();
+  // Compléter l'inscription
+  let formData = new FormData();
+  formData.append('nom', document.getElementById('nom').value);
+  formData.append('email', document.getElementById('email').value);
+  formData.append('genre', document.querySelector('input[name="genre"]:checked').value);
+  formData.append('taille', document.getElementById('taille').value);
+  formData.append('poids', document.getElementById('poids').value);
+  formData.append('mdp', mdp);
+  formData.append('objectif', document.querySelector('input[name="objectif"]:checked').value);
+  formData.append('valeur_objectif', document.getElementById('valeur_objectif').value || 0);
+
+  const response = await fetch('<?= base_url("api/complete-inscription") ?>', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  });
+
+  const result = await response.json();
+  if (result.success) {
+    // Redirection vers le dashboard
+    window.location.href = '<?= base_url() ?>' + result.redirect;
+  } else {
+    alert('Erreur : ' + (result.message || 'Une erreur est survenue'));
+  }
 }
+
 function togglePwd(id, btn) {
   const input = document.getElementById(id);
   if (input.type === 'password') { input.type = 'text'; btn.innerHTML = '<i class="bi bi-eye-slash"></i>'; }
@@ -342,25 +435,23 @@ function calcIMC() {
     const imc = (p / (t * t)).toFixed(1);
     document.getElementById('imcVal').textContent = imc;
 
-    let status = '';if (imc < 18.5)      status = '<i class="bi bi-exclamation-triangle-fill" style="color:#BA7517"></i> Insuffisance pondérale';
+    let status = '';
+    if (imc < 18.5)      status = '<i class="bi bi-exclamation-triangle-fill" style="color:#BA7517"></i> Insuffisance pondérale';
     else if (imc < 25)   status = '<i class="bi bi-check-circle-fill" style="color:#2D6A4F"></i> Poids normal';
     else if (imc < 30)   status = '<i class="bi bi-exclamation-triangle-fill" style="color:#BA7517"></i> Surpoids';
     else                  status = '<i class="bi bi-x-circle-fill" style="color:#A32D2D"></i> Obésité';
 
-    document.getElementById('imcStatus').innerHTML = status; // innerHTML au lieu de textContent !
+    document.getElementById('imcStatus').innerHTML = status;
     preview.style.display = 'flex';
   } else {
     preview.style.display = 'none';
   }
-
-  
 }
 
 document.getElementById('taille').addEventListener('input', calcIMC);
 document.getElementById('poids').addEventListener('input', calcIMC);
 
-
-// Ajouter après calcIMC()
+// Objectif choice logic
 document.querySelectorAll('input[name="objectif"]').forEach(radio => {
   radio.addEventListener('change', function() {
     const fieldKg      = document.getElementById('fieldKg');
@@ -368,17 +459,14 @@ document.querySelectorAll('input[name="objectif"]').forEach(radio => {
     const labelKg      = document.getElementById('labelKg');
 
     if (this.value === '1') {
-      // Augmenter son poids
       fieldKg.style.display     = 'block';
       msgImcIdeal.style.display = 'none';
       labelKg.textContent       = 'Combien de kg voulez-vous prendre ?';
     } else if (this.value === '2') {
-      // Réduire son poids
       fieldKg.style.display     = 'block';
       msgImcIdeal.style.display = 'none';
       labelKg.textContent       = 'Combien de kg voulez-vous perdre ?';
     } else if (this.value === '3') {
-      // IMC idéal → calculé automatiquement
       fieldKg.style.display     = 'none';
       msgImcIdeal.style.display = 'block';
     }
