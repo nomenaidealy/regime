@@ -46,13 +46,14 @@
 					<p>Entrez vos identifiants pour accéder à votre compte.</p>
 				</div>
 
-				<div class="field">
-					<label>Adresse email</label>
-					<input type="email" name="email" id="email" placeholder="Votre email" required>
-					<?php if (session('errors.email')): ?>
-						<div class="err-msg"><?= session('errors.email') ?></div>
-					<?php endif; ?>
-				</div>
+						<div class="field">
+							<label>Adresse email</label>
+							<input type="email" name="email" id="email" placeholder="Votre email" required>
+							<div class="err-msg" id="emailError" style="display:none;color:#A32D2D;margin-top:5px;"></div>
+							<?php if (session('errors.email')): ?>
+								<div class="err-msg" style="color:#A32D2D;"><?= session('errors.email') ?></div>
+							<?php endif; ?>
+						</div>
 
 				<div class="field">
 					<label>Mot de passe</label>
@@ -80,6 +81,36 @@ function togglePwd(id, btn) {
 	if (input.type === 'password') { input.type = 'text'; btn.innerHTML = '<i class="bi bi-eye-slash"></i>'; }
 	else { input.type = 'password'; btn.innerHTML = '<i class="bi bi-eye"></i>'; }
 }
+
+// Validation email côté client
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+	const emailInput = document.getElementById('email');
+	const emailError = document.getElementById('emailError');
+	const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	if (!emailRe.test(emailInput.value)) {
+		emailError.textContent = 'Email invalide';
+		emailError.style.display = 'block';
+		e.preventDefault();
+	} else {
+		emailError.style.display = 'none';
+	}
+});
+
+// Autocompletion @gmail.com après tabulation
+document.getElementById('email').addEventListener('keydown', function(e) {
+	if (e.key === 'Tab') {
+		const val = this.value;
+		if (val && !val.includes('@')) {
+			this.value = val + '@gmail.com';
+			// Laisse le focus passer au champ suivant après autocomplétion
+			// On ne fait pas e.preventDefault() pour permettre la tabulation
+			// Optionnel : sélectionner la partie "@gmail.com" pour modification rapide
+			setTimeout(() => {
+				this.setSelectionRange(val.length + 1, this.value.length);
+			}, 0);
+		}
+	}
+});
 </script>
 
 <?= $this->endSection() ?>
