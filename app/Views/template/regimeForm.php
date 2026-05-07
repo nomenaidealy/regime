@@ -177,21 +177,29 @@
           <i class="bi bi-tags-fill"></i> Prix selon la durée
         </div>
 
-        <div class="prix-grid">
-          <div class="prix-row">
-            <div class="duree-badge">30 jours</div>
-            <input type="number" name="prix_30" placeholder="Prix en Ar" min="0">
-            <div class="unit">Ar</div>
+        <div id="prixPanel">
+          <p style="margin-bottom:8px; color:var(--text-muted);">Entrez une ou plusieurs durées (en jours) et leur prix. Cliquez sur + pour ajouter une ligne.</p>
+
+          <div id="prixContainer">
+            <!-- Ligne initiale par défaut -->
+            <div class="prix-row dynamique" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+              <input type="number" name="duree[]" class="input-duree" placeholder="Durée (jours)" min="1" value="30" style="width:120px;">
+              <input type="number" name="prix[]" class="input-prix" placeholder="Prix en Ar" min="0" style="width:140px;">
+              <button type="button" class="btn-remove" onclick="removeDureeRow(this)" title="Supprimer" style="background:none;border:none;color:#A93226;font-size:18px;">&times;</button>
+            </div>
           </div>
-          <div class="prix-row">
-            <div class="duree-badge">60 jours</div>
-            <input type="number" name="prix_60" placeholder="Prix en Ar" min="0">
-            <div class="unit">Ar</div>
+
+          <!-- Template caché pour une ligne -->
+          <div id="prixRowTemplate" style="display:none;">
+            <div class="prix-row dynamique" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+              <input type="number" name="duree[]" class="input-duree" placeholder="Durée (jours)" min="1" style="width:120px;">
+              <input type="number" name="prix[]" class="input-prix" placeholder="Prix en Ar" min="0" style="width:140px;">
+              <button type="button" class="btn-remove" onclick="removeDureeRow(this)" title="Supprimer" style="background:none;border:none;color:#A93226;font-size:18px;">&times;</button>
+            </div>
           </div>
-          <div class="prix-row">
-            <div class="duree-badge">90 jours</div>
-            <input type="number" name="prix_90" placeholder="Prix en Ar" min="0">
-            <div class="unit">Ar</div>
+
+          <div style="margin-top:10px;">
+            <button type="button" id="addDureeBtn" class="btn-submit" onclick="addDureeRow()" style="display:inline-flex; align-items:center; gap:8px;"><i class="bi bi-plus-circle-fill"></i> Ajouter une durée</button>
           </div>
         </div>
       </div>
@@ -248,7 +256,88 @@ function prepareSubmit() {
     return false;
   }
 
+  // Valider les durées/prix dynamiques (sélectionner uniquement les lignes dans #prixContainer pour ignorer le template caché)
+  // Nettoyer d'abord les lignes entièrement vides (durée ET prix vides)
+  const container = document.getElementById('prixContainer');
+  Array.from(container.querySelectorAll('.prix-row')).forEach(row => {
+    const dEl = row.querySelector('input[name="duree[]"]');
+    const pEl = row.querySelector('input[name="prix[]"]');
+    const dVal = dEl ? (dEl.value || '').toString().trim() : '';
+    const pVal = pEl ? (pEl.value || '').toString().trim() : '';
+    if (dVal === '' && pVal === '') {
+      row.remove();
+    }
+  });
+
+  const dureeEls = Array.from(document.querySelectorAll('#prixContainer input[name="duree[]"]'));
+  const prixEls  = Array.from(document.querySelectorAll('#prixContainer input[name="prix[]"]'));
+
+  if (dureeEls.length === 0) {
+    alert('Veuillez ajouter au moins une durée et son prix.');
+    return false;
+  }
+
+  // valeurs lues côté client (pour validation)
+  const dureesRaw = dureeEls.map(e => e.value);
+  const prixRaw = prixEls.map(e => e ? e.value : null);
+
+    for (let i = 0; i < dureeEls.length; i++) {
+    const rawDr = (dureeEls[i].value || '').toString().trim();
+    const rawPr = (prixEls[i] && prixEls[i].value) ? prixEls[i].value.toString().trim() : '';
+    // Cas: durée vide mais prix renseigné => erreur claire
+    if ((rawDr === '' && rawPr !== '')) {
+      alert('Durée manquante à la ligne ' + (i+1) + ' alors que le prix est renseigné. Veuillez saisir la durée.');
+      return false;
+    }
+    if ((rawDr !== '' && rawPr === '')) {
+      alert('Prix manquant à la ligne ' + (i+1) + ' alors que la durée est renseignée. Veuillez saisir le prix.');
+      return false;
+    }
+    const dr = parseInt(rawDr, 10);
+    const pr = parseFloat(rawPr);
+    if (isNaN(dr) || dr <= 0) {
+      alert('Durée invalide à la ligne ' + (i+1) + ' : "' + rawDr + '"\nLa durée doit être un entier positif.');
+      return false;
+    }
+    if (isNaN(pr) || pr < 0) {
+      alert('Prix invalide à la ligne ' + (i+1) + ' : "' + rawPr + '"\nLe prix doit être un nombre >= 0.');
+      return false;
+    }
+  }
+
   return true;
+}
+
+// Ajoute une nouvelle ligne durée/prix en clonant le template
+function addDureeRow() {
+  const tpl = document.getElementById('prixRowTemplate');
+  const container = document.getElementById('prixContainer');
+  const clone = tpl.firstElementChild.cloneNode(true);
+  // Réinitialiser les valeurs
+  // Préremplir la durée avec la dernière valeur connue (ou 30) pour éviter des lignes vides
+  const lastD = container.querySelector('input[name="duree[]"]:last-of-type');
+  let defaultDuree = 30;
+  if (lastD && lastD.value) {
+    const parsed = parseInt(lastD.value, 10);
+    if (!isNaN(parsed) && parsed > 0) defaultDuree = parsed;
+  }
+  clone.querySelectorAll('input').forEach((i, idx) => {
+    if (i.classList.contains('input-duree')) i.value = defaultDuree;
+    else i.value = '';
+  });
+  // focus sur la durée pour que l'utilisateur puisse la modifier immédiatement
+  setTimeout(() => {
+    const inDur = clone.querySelector('input.input-duree');
+    if (inDur) inDur.focus();
+  }, 10);
+  container.appendChild(clone);
+}
+
+// Supprime une ligne donnée
+function removeDureeRow(btn) {
+  const row = btn.closest('.prix-row');
+  if (!row) return;
+  row.remove();
 }
 </script>
 

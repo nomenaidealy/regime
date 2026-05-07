@@ -13,11 +13,13 @@ $routes->post('api/validate-step3', 'UserController::validateStep3');
 $routes->post('api/complete-inscription', 'UserController::completeInscription');
 $routes->get('logout',          'UserController::logout');
 
-$routes->get('regimeForm',    'RegimeController::form');
+$routes->get('admin/regimes/create',    'RegimeController::form');
 
 $routes->get('admin/dashboard', 'AdminController::dashboard');
 
 $routes->get('admin/regimes',  'RegimeController::list');
+
+$routes->post('admin/regimes/save',  'RegimeController::save');
 
 // Sports CRUD
 $routes->get('admin/sports',          'SportController::list');

@@ -27,7 +27,7 @@
 			</div>
 		</div>
 		<div class="regime-left-bottom">
-			<a href="<?= base_url('admin') ?>"><i class="bi bi-arrow-left"></i> Retour</a>
+			<a href="<?= base_url('admin/dashboard') ?>"><i class="bi bi-arrow-left"></i> Retour</a>
 		</div>
 	</div>
 
@@ -40,7 +40,7 @@
 
 		<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
 			<div></div>
-			<a href="<?= base_url('regimeForm') ?>" class="btn-submit" style="display:inline-flex; align-items:center; gap:8px;">
+			<a href="<?= base_url('admin/regimes/create') ?>" class="btn-submit" style="display:inline-flex; align-items:center; gap:8px;">
 				<i class="bi bi-plus-circle-fill"></i> Créer un régime
 			</a>
 		</div>
