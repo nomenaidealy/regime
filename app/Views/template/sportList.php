@@ -51,7 +51,7 @@
             <td style="padding:12px; vertical-align:top"><?= isset($s['variation_poids_seance']) ? esc($s['variation_poids_seance']) . ' kg' : '—' ?></td>
             <td style="padding:12px; vertical-align:top">
               <a href="<?= base_url('admin/sports/edit/' . ($s['id'] ?? '')) ?>" title="Modifier" style="margin-right:8px; color:#2D6A4F;"><i class="bi bi-pencil-square"></i></a>
-              <a href="<?= base_url('admin/sports/delete/' . ($s['id'] ?? '')) ?>" title="Supprimer" onclick="return confirm('Supprimer cette activité ?')" style="color:#A93226;"><i class="bi bi-trash-fill"></i></a>
+              <a href="<?= base_url('admin/sports/delete/' . ($s['id'] ?? '')) ?>" title="Supprimer" style="color:#A93226;"><i class="bi bi-trash-fill"></i></a>
             </td>
           </tr>
           <?php endforeach; ?>

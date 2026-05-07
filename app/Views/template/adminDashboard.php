@@ -14,6 +14,14 @@
       <h2>Tableau de bord <em>Admin</em></h2>
       <p>Statistiques rapides et indicateurs clés.</p>
     </div>
+    <nav style="margin-top:18px;">
+      <ul style="list-style:none; padding:0;">
+        <li style="margin-bottom:8px;"><a href="<?= base_url('admin/dashboard') ?>">Dashboard</a></li>
+        <li style="margin-bottom:8px;"><a href="<?= base_url('admin/regimes') ?>">Régimes</a></li>
+        <li style="margin-bottom:8px;"><a href="<?= base_url('admin/sports') ?>">Activités sportives</a></li>
+        <li style="margin-bottom:8px;"><a href="<?= base_url('profil') ?>">Utilisateurs</a></li>
+      </ul>
+    </nav>
     <div class="regime-left-bottom">
       <a href="<?= base_url('/') ?>"><i class="bi bi-arrow-left"></i> Retour au site</a>
     </div>

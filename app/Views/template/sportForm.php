@@ -22,7 +22,7 @@
       </div>
     </div>
     <div class="regime-left-bottom">
-      <a href="<?= base_url('admin/sport/list') ?>"><i class="bi bi-arrow-left"></i> Retour à la liste</a>
+      <a href="<?= base_url('admin/sports') ?>"><i class="bi bi-arrow-left"></i> Retour à la liste</a>
     </div>
   </div>
 
@@ -30,7 +30,7 @@
 
     <div class="form-header">
       <div class="tag">Back Office — Activités</div>
-      <h1>Nouvelle activité sportive</h1>
+      <h1><?= isset($mode) && $mode === 'edit' ? 'Modifier l\'activité' : 'Nouvelle activité sportive' ?></h1>
       <p>Remplissez les informations ci-dessous.</p>
     </div>
 
@@ -40,7 +40,7 @@
       </div>
     <?php endif; ?>
 
-    <form action="<?= base_url('admin/sports/save') ?>" method="POST" id="sportForm">
+    <form action="<?= isset($mode) && $mode === 'edit' ? base_url('admin/sports/update/' . ($sport['id'] ?? '')) : base_url('admin/sports/save') ?>" method="POST" id="sportForm">
       <?= csrf_field() ?>
 
       <div class="form-section">
@@ -51,7 +51,7 @@
         </div>
         <div class="field">
           <label>Variation poids par séance (kg)</label>
-          <input type="number" name="variation_poids_seance" step="0.01" min="0" placeholder="Ex: 0.05" value="<?= esc($sport['variation_poids_seance'] ?? '') ?>">
+          <input type="number" name="variation_poids_seance" step="0.01" placeholder="Ex: 0.05" value="<?= esc($sport['variation_poids_seance'] ?? '') ?>">
         </div>
         <div class="field">
           <label>Description</label>

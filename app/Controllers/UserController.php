@@ -173,7 +173,7 @@ class UserController extends Controller
         // Nettoyer les données temporaires
         session()->remove(['inscription_step1', 'inscription_step2', 'inscription_step3']);
 
-        return $this->response->setJSON(['success' => true, 'redirect' => 'dashboard']);
+        return $this->response->setJSON(['success' => true, 'redirect' => '/dashboard']);
     }
 
     /**
@@ -229,6 +229,34 @@ class UserController extends Controller
         $email     = $this->request->getPost('email');
         $mdp       = $this->request->getPost('mdp');
 
+        $db = \Config\Database::connect();
+
+        // Check admin table first (admin.login stores the admin identifier)
+        $adminRow = $db->table('admin')->where('login', $email)->get()->getRowArray();
+        if ($adminRow) {
+            // Admin password may be stored hashed or plain; try password_verify first then plain compare
+            $stored = $adminRow['mdp'] ?? '';
+            $ok = false;
+            if ($stored && password_verify($mdp, $stored)) {
+                $ok = true;
+            } elseif ($stored === $mdp) {
+                $ok = true;
+            }
+
+            if ($ok) {
+                // Set admin session
+                session()->set([
+                    'isLoggedIn' => true,
+                    'is_admin'   => true,
+                    'admin_login'=> $adminRow['login'],
+                ]);
+                return redirect()->to('/admin/dashboard')->with('success', 'Bienvenue, administrateur.');
+            }
+
+            return redirect()->to('login')->with('login_error', 'Identifiants administrateur invalides.');
+        }
+
+        // Not admin — normal user flow
         $result = $userModel->verifyUser($email, $mdp);
         if (!$result['success']) {
             return redirect()->to('login')->with('login_error', $result['message']);
@@ -236,7 +264,6 @@ class UserController extends Controller
         $user = $result['user'];
 
         // Vérifier si Gold
-        $db     = \Config\Database::connect();
         $isGold = $db->table('user_gold_at_time')
             ->where('id_user', $user['id'])
             ->countAllResults() > 0;
@@ -260,8 +287,64 @@ class UserController extends Controller
             'solde'      => $solde,
         ]);
 
-        return redirect()->to('/')
-            ->with('success', 'Bon retour, ' . $user['nom'] . ' !');
+        return redirect()->to('/dashboard')->with('success', 'Bon retour, ' . $user['nom'] . ' !');
+    }
+
+    /**
+     * User dashboard: show IMC, current objectif, solde and active subscriptions
+     */
+    public function dashboard()
+    {
+        $userId = session()->get('user_id');
+        if (!$userId) {
+            return redirect()->to('login')->with('error', 'Connectez-vous pour voir le tableau de bord.');
+        }
+
+        $userModel = new UserModel();
+        $db = \Config\Database::connect();
+
+        $user = $userModel->find($userId);
+        if (!$user) {
+            return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
+        }
+
+        $imc = round($user['poids'] / ($user['taille'] * $user['taille']), 1);
+
+        $objectif = $db->table('user_objectif uo')
+            ->join('objectif o', 'o.id = uo.id_objectif')
+            ->where('uo.id_user', $userId)
+            ->orderBy('uo.date_choix', 'DESC')
+            ->limit(1)
+            ->get()->getRow();
+
+        $dernierMouvement = $db->table('mouvement')
+            ->where('id_user', $userId)
+            ->orderBy('date_mouvement', 'DESC')
+            ->limit(1)
+            ->get()->getRow();
+        $solde = $dernierMouvement ? (float)$dernierMouvement->montant_apres : 0.00;
+
+        $isGold = $db->table('user_gold_at_time')
+            ->where('id_user', $userId)
+            ->countAllResults() > 0;
+
+        // Subscriptions
+        $subscriptions = $db->table('user_diet ud')
+            ->select('ud.*, dp.duree, dp.prix, d.nom AS diet_nom')
+            ->join('diet_prix dp', 'dp.id = ud.id_diet_prix')
+            ->join('diet d', 'd.id = dp.id_diet')
+            ->where('ud.id_user', $userId)
+            ->orderBy('ud.date_debut', 'DESC')
+            ->get()->getResultArray();
+
+        return view('template/userDashboard', [
+            'user' => $user,
+            'imc' => $imc,
+            'objectif' => $objectif,
+            'solde' => $solde,
+            'isGold' => $isGold,
+            'subscriptions' => $subscriptions,
+        ]);
     }
 
     // ─────────────────────────────────────────
