@@ -84,11 +84,7 @@ public function saveUser()
     // ─────────────────────────────────────────
     public function loginPage()
     {
-        // Si déjà connecté → redirect dashboard
-        if (session()->get('isLoggedIn')) {
-            return redirect()->to('dashboard');
-        }
-        return view('template/login');
+        return view('login');
     }
 
     public function login()

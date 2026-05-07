@@ -120,3 +120,4 @@ _modules/*
 
 /results/
 /phpunit*.xml
+/app/Config/Database.php
