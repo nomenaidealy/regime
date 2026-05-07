@@ -13,8 +13,12 @@ $routes->post('api/validate-step3', 'UserController::validateStep3');
 $routes->post('api/complete-inscription', 'UserController::completeInscription');
 $routes->get('logout',          'UserController::logout');
 
+// Gold option
+$routes->get('gold/activate',   'GoldController::activate');
+
 // User dashboard
 $routes->get('dashboard', 'UserController::dashboard');
+$routes->get('profil',    'UserController::profil');
 
 // admin dashboard
 $routes->get('admin/dashboard', 'AdminController::dashboard');

@@ -148,7 +148,7 @@
       <div class="gc-sub">Paiement unique — valable à vie</div>
       <div class="gc-price"><small>Ar </small>150 000</div>
       <div class="gc-note">15% de remise permanente sur tous vos régimes</div>
-      <a href="inscription.html" class="btn-gold">Activer l'option Gold</a>
+      <a href="<?= base_url('gold/activate') ?>" class="btn-gold">Activer l'option Gold</a>
     </div>
   </div>
 </section>

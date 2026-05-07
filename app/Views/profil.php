@@ -1,6 +1,6 @@
 <?= $this->extend('layout') ?>
 
-<?= $this->section('title') ?>NutriPlan — Mon tableau de bord<?= $this->endSection() ?>
+<?= $this->section('title') ?>NutriPlan — Mon profil<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
@@ -11,19 +11,19 @@
   <div class="regime-left">
     <div class="logo">Nutri<span>Plan</span></div>
     <div>
-      <h2>Mon compte</h2>
-      <p>Informations personnelles et abonnements.</p>
+      <h2>Mon profil</h2>
+      <p>Vue complète de vos informations et de votre statut.</p>
     </div>
     <div class="regime-left-bottom">
-      <a href="<?= base_url('/') ?>"><i class="bi bi-arrow-left"></i> Retour</a>
+      <a href="<?= base_url('dashboard') ?>"><i class="bi bi-arrow-left"></i> Retour</a>
     </div>
   </div>
 
   <div class="regime-right">
     <div class="form-header">
       <div class="tag">Mon espace</div>
-      <h1>Tableau de bord</h1>
-      <p>Résumé rapide de votre profil.</p>
+      <h1>Profil utilisateur</h1>
+      <p>Consultez votre statut Gold et vos informations personnelles.</p>
     </div>
 
     <div style="display:flex; gap:20px; margin-bottom:18px;">
