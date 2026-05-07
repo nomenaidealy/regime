@@ -19,7 +19,7 @@ class UserController extends Controller
         return view('template/inscription');
     }
 
-      protected $userModel;
+    protected $userModel;
     protected $objectifModel;
     protected $promoModel;
     protected $mouvementModel;
@@ -122,10 +122,21 @@ class UserController extends Controller
             return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
         }
 
-        // Récupérer les données sauvegardées en session
+        // Récupérer les données sauvegardées en session, ou fallback aux POST si session manquante
         $step1Data = session()->get('inscription_step1') ?? [];
         $step2Data = session()->get('inscription_step2') ?? [];
         $step3Data = session()->get('inscription_step3') ?? [];
+
+        // Fallback vers POST si les sessions sont absentes (robuste pour appels directs)
+        $step1Data['nom']   = $step1Data['nom']   ?? $this->request->getPost('nom');
+        $step1Data['email'] = $step1Data['email'] ?? $this->request->getPost('email');
+        $step1Data['genre'] = $step1Data['genre'] ?? $this->request->getPost('genre');
+
+        $step2Data['taille']   = $step2Data['taille']   ?? $this->request->getPost('taille');
+        $step2Data['poids']    = $step2Data['poids']    ?? $this->request->getPost('poids');
+        $step2Data['objectif'] = $step2Data['objectif'] ?? $this->request->getPost('objectif');
+
+        $step3Data['mdp'] = $step3Data['mdp'] ?? $this->request->getPost('mdp');
 
         // Fusionner toutes les données
         $data = array_merge($step1Data, $step2Data, [
@@ -136,7 +147,13 @@ class UserController extends Controller
         $userId = $this->userModel->createUser($data);
 
         if (!$userId) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Erreur lors de la création']);
+            // Récupérer erreurs du modèle si disponibles
+            $errors = $this->userModel->errors();
+            $msg = 'Erreur lors de la création';
+            if (!empty($errors)) {
+                $msg = implode(' | ', $errors);
+            }
+            return $this->response->setJSON(['success' => false, 'message' => $msg]);
         }
 
         // Ajoute l'objectif

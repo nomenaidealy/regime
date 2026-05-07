@@ -15,7 +15,7 @@
       <p>Liste et gestion des activités sportives utilisées par les régimes.</p>
     </div>
     <div class="regime-left-bottom">
-      <a href="<?= base_url('admin') ?>"><i class="bi bi-arrow-left"></i> Retour</a>
+      <a href="<?= base_url('/admin/dashboard') ?>"><i class="bi bi-arrow-left"></i> Retour</a>
     </div>
   </div>
 

@@ -99,7 +99,7 @@
       </div>
     </div>
 
-    <button class="btn-next" onclick="goTo(2)">Suivant <i class="bi bi-arrow-right"></i></button>
+  <button type="button" class="btn-next" onclick="goTo(2)">Suivant <i class="bi bi-arrow-right"></i></button>
   </div>
 
   <!-- STEP 2 : Infos santé + objectif -->
@@ -181,8 +181,8 @@
       </div>
     </div>
 
-    <button class="btn-next" onclick="goTo(3)">Suivant <i class="bi bi-arrow-right"></i></button>
-    <button class="btn-back" onclick="goTo(1)"><i class="bi bi-arrow-left"></i> Retour</button>
+  <button type="button" class="btn-next" onclick="goTo(3)">Suivant <i class="bi bi-arrow-right"></i></button>
+  <button type="button" class="btn-back" onclick="goTo(1)"><i class="bi bi-arrow-left"></i> Retour</button>
   </div>
 
   <!-- STEP 3 : Mot de passe -->
@@ -213,8 +213,8 @@
 
     
 
-    <button class="btn-next" onclick="submit()"><i class="bi bi-balloon-heart"></i> Créer mon compte</button>
-    <button class="btn-back" onclick="goTo(2)"><i class="bi bi-arrow-left"></i> Retour</button>
+  <button type="button" class="btn-next" onclick="submit()"><i class="bi bi-balloon-heart"></i> Créer mon compte</button>
+  <button type="button" class="btn-back" onclick="goTo(2)"><i class="bi bi-arrow-left"></i> Retour</button>
   </div>
 
   <!-- SUCCESS -->
@@ -262,8 +262,11 @@ function initializeForm() {
 // Appeler l'initialisation au chargement
 document.addEventListener('DOMContentLoaded', initializeForm);
 
-function goTo(step) {
-  if (step > currentStep && !validateAndProceed(currentStep)) return;
+async function goTo(step) {
+  if (step > currentStep) {
+    const ok = await validateAndProceed(currentStep);
+    if (!ok) return;
+  }
 
   document.getElementById('step' + currentStep).classList.remove('active');
   currentStep = step;

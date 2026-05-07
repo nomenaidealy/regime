@@ -89,16 +89,18 @@ class UserModel extends Model
      */
     public function validateStep2($data)
     {
+        // L'objectif envoyé depuis le front correspond à un id (1,2,3),
+        // donc on valide qu'il s'agit d'un entier naturel non nul.
         $rules = [
             'taille'  => 'required|numeric|greater_than[0]',
             'poids'   => 'required|numeric|greater_than[0]',
-            'objectif' => 'required|in_list[Perte de poids,Prise de poids,Maintien]',
+            'objectif' => 'required|is_natural_no_zero',
         ];
 
         $messages = [
             'taille'  => ['required' => 'La taille est obligatoire', 'numeric' => 'Valeur numérique requise'],
             'poids'   => ['required' => 'Le poids est obligatoire', 'numeric' => 'Valeur numérique requise'],
-            'objectif' => ['required' => 'L\'objectif est obligatoire'],
+            'objectif' => ['required' => 'L\'objectif est obligatoire', 'is_natural_no_zero' => 'Objectif invalide'],
         ];
 
         $validation = \Config\Services::validation();
@@ -187,8 +189,8 @@ class UserModel extends Model
                 return ['success' => false, 'message' => "Adresse email inconnue."];
             }
 
-            if ($user['mdp'] !== $mdp) {
-                // Mot de passe incorrect
+            // Vérifier le mot de passe haché
+            if (!password_verify($mdp, $user['mdp'])) {
                 return ['success' => false, 'message' => "Mot de passe incorrect."];
             }
 
