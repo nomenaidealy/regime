@@ -260,7 +260,7 @@ class UserController extends Controller
             'solde'      => $solde,
         ]);
 
-        return redirect()->to('dashboard')
+        return redirect()->to('/')
             ->with('success', 'Bon retour, ' . $user['nom'] . ' !');
     }
 
