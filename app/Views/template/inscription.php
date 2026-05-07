@@ -180,14 +180,7 @@
       <div class="err-msg">Minimum 6 caractères</div>
     </div>
 
-    <div class="field">
-      <label>Confirmer le mot de passe</label>
-      <div class="pwd-wrapper">
-        <input type="password" id="mdpConfirm" placeholder="Répétez votre mot de passe">
-        <button class="pwd-toggle" onclick="togglePwd('mdpConfirm', this)"><i class="bi bi-eye"></i></button>
-      </div>
-      <div class="err-msg">Les mots de passe ne correspondent pas</div>
-    </div>
+    
 
     <button class="btn-next" onclick="submit()"><i class="bi bi-balloon-heart"></i> Créer mon compte</button>
     <button class="btn-back" onclick="goTo(2)"><i class="bi bi-arrow-left"></i> Retour</button>
@@ -251,13 +244,12 @@ function validate(step) {
 
   if (step === 3) {
     const mdp        = document.getElementById('mdp');
-    const mdpConfirm = document.getElementById('mdpConfirm');
+    
 
     if (mdp.value.length < 6) { mdp.classList.add('error'); ok = false; }
     else mdp.classList.remove('error');
 
-    if (mdp.value !== mdpConfirm.value) { mdpConfirm.classList.add('error'); ok = false; }
-    else mdpConfirm.classList.remove('error');
+  
   }
 
   return ok;
