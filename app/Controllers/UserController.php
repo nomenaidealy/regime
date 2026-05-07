@@ -54,6 +54,8 @@ class UserController extends Controller
         $result = $this->userModel->validateStep1($data);
 
         if ($result['valid']) {
+            // Sauvegarder en session
+            session()->set('inscription_step1', $data);
             return $this->response->setJSON(['success' => true]);
         }
 
@@ -78,6 +80,8 @@ class UserController extends Controller
         $result = $this->userModel->validateStep2($data);
 
         if ($result['valid']) {
+            // Sauvegarder en session
+            session()->set('inscription_step2', $data);
             return $this->response->setJSON(['success' => true]);
         }
 
@@ -101,6 +105,8 @@ class UserController extends Controller
         $result = $this->userModel->validateStep3($data);
 
         if ($result['valid']) {
+            // Sauvegarder en session
+            session()->set('inscription_step3', $data);
             return $this->response->setJSON(['success' => true]);
         }
 
@@ -116,14 +122,15 @@ class UserController extends Controller
             return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
         }
 
-        $data = [
-            'nom'    => $this->request->getPost('nom'),
-            'email'  => $this->request->getPost('email'),
-            'genre'  => $this->request->getPost('genre'),
-            'taille' => $this->request->getPost('taille'),
-            'poids'  => $this->request->getPost('poids'),
-            'mdp'    => $this->request->getPost('mdp'),
-        ];
+        // Récupérer les données sauvegardées en session
+        $step1Data = session()->get('inscription_step1') ?? [];
+        $step2Data = session()->get('inscription_step2') ?? [];
+        $step3Data = session()->get('inscription_step3') ?? [];
+
+        // Fusionner toutes les données
+        $data = array_merge($step1Data, $step2Data, [
+            'mdp' => $step3Data['mdp'] ?? '',
+        ]);
 
         // Crée l'utilisateur
         $userId = $this->userModel->createUser($data);
@@ -135,7 +142,7 @@ class UserController extends Controller
         // Ajoute l'objectif
         $this->objectifModel->insertObjectif(
             $userId,
-            $this->request->getPost('objectif'),
+            $step2Data['objectif'] ?? null,
             $this->request->getPost('valeur_objectif')
         );
 
@@ -145,6 +152,9 @@ class UserController extends Controller
             'user_nom'   => $data['nom'],
             'isLoggedIn' => true
         ]);
+
+        // Nettoyer les données temporaires
+        session()->remove(['inscription_step1', 'inscription_step2', 'inscription_step3']);
 
         return $this->response->setJSON(['success' => true, 'redirect' => 'dashboard']);
     }

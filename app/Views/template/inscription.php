@@ -230,6 +230,38 @@
 <script>
 let currentStep = 1;
 
+// Initialiser avec les données sauvegardées en session
+const savedStep1 = <?= json_encode(session()->get('inscription_step1') ?? []) ?>;
+const savedStep2 = <?= json_encode(session()->get('inscription_step2') ?? []) ?>;
+const savedStep3 = <?= json_encode(session()->get('inscription_step3') ?? []) ?>;
+
+// Pré-remplir les champs à la première charge
+function initializeForm() {
+  if (savedStep1.nom) {
+    document.getElementById('nom').value = savedStep1.nom;
+  }
+  if (savedStep1.email) {
+    document.getElementById('email').value = savedStep1.email;
+  }
+  if (savedStep1.genre) {
+    document.querySelector(`input[name="genre"][value="${savedStep1.genre}"]`)?.click();
+  }
+
+  if (savedStep2.taille) {
+    document.getElementById('taille').value = savedStep2.taille;
+  }
+  if (savedStep2.poids) {
+    document.getElementById('poids').value = savedStep2.poids;
+    calcIMC();
+  }
+  if (savedStep2.objectif) {
+    document.querySelector(`input[name="objectif"][value="${savedStep2.objectif}"]`)?.click();
+  }
+}
+
+// Appeler l'initialisation au chargement
+document.addEventListener('DOMContentLoaded', initializeForm);
+
 function goTo(step) {
   if (step > currentStep && !validateAndProceed(currentStep)) return;
 
