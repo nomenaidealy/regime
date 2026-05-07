@@ -68,8 +68,8 @@
 					<tbody>
 						<?php foreach ($regimes as $r): ?>
 						<tr style="border-bottom:1px solid #f0f0f0;">
-							<td style="padding:12px; vertical-align:top"><?= esc($r['nom'] ?? '') ?></td>
-							<td style="padding:12px; vertical-align:top; max-width:360px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?= esc($r['description'] ?? '') ?></td>
+							<td style="padding:12px; vertical-align:top"><?= esc($r['diet_nom'] ?? '') ?></td>
+							<td style="padding:12px; vertical-align:top; max-width:360px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?= esc($r['diet_description'] ?? '') ?></td>
 							<td style="padding:12px; vertical-align:top">
 								<?php if (isset($r['viande_percent'])): ?>
 									V: <?= esc($r['viande_percent']) ?>% • O: <?= esc($r['volaille_percent'] ?? 0) ?>% • P: <?= esc($r['poisson_percent'] ?? 0) ?>%
@@ -77,11 +77,11 @@
 									—
 								<?php endif; ?>
 							</td>
-							<td style="padding:12px; vertical-align:top"><?= isset($r['prix_30']) ? number_format($r['prix_30'], 0, ',', ' ') . ' Ar' : '—' ?></td>
-							<td style="padding:12px; vertical-align:top">
-								<a href="<?= base_url('admin/regimes/edit/' . ($r['id'] ?? '')) ?>" title="Modifier" style="margin-right:8px; color:#2D6A4F;"><i class="bi bi-pencil-square"></i></a>
-								<a href="<?= base_url('admin/regimes/delete/' . ($r['id'] ?? '')) ?>" title="Supprimer" onclick="return confirm('Voulez-vous vraiment supprimer ce régime ?')" style="color:#A93226;"><i class="bi bi-trash-fill"></i></a>
-							</td>
+								<td style="padding:12px; vertical-align:top"><?= isset($r['prix_30']) ? number_format($r['prix_30'], 0, ',', ' ') . ' Ar' : '—' ?></td>
+								<td style="padding:12px; vertical-align:top">
+									<a href="<?= base_url('admin/regimes/edit/' . ($r['diet_id'] ?? '')) ?>" title="Modifier" style="margin-right:8px; color:#2D6A4F;"><i class="bi bi-pencil-square"></i></a>
+									<a href="<?= base_url('admin/regimes/delete/' . ($r['diet_id'] ?? '')) ?>" title="Supprimer" onclick="return confirm('Voulez-vous vraiment supprimer ce régime ?')" style="color:#A93226;"><i class="bi bi-trash-fill"></i></a>
+								</td>
 						</tr>
 						<?php endforeach; ?>
 					</tbody>

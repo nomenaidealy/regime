@@ -54,7 +54,7 @@
       </div>
     <?php endif; ?>
 
-    <form action="<?= base_url('admin/regimes/save') ?>" method="POST" id="regimeForm">
+    <form action="<?= isset($mode) && $mode === 'edit' && isset($diet['id']) ? base_url('admin/regimes/update/'.$diet['id']) : base_url('admin/regimes/save') ?>" method="POST" id="regimeForm">
       <?= csrf_field() ?>
 
       <!-- SECTION 1 : Infos générales -->
@@ -65,12 +65,12 @@
 
         <div class="field">
           <label>Nom du régime</label>
-          <input type="text" name="nom" placeholder="Ex: Méditerranéen Minceur" required>
+          <input type="text" name="nom" placeholder="Ex: Méditerranéen Minceur" required value="<?= isset($diet['nom']) ? esc($diet['nom']) : '' ?>">
         </div>
 
         <div class="field">
           <label>Description</label>
-          <textarea name="description" placeholder="Décrivez brièvement ce régime..."></textarea>
+          <textarea name="description" placeholder="Décrivez brièvement ce régime..."><?= isset($diet['description']) ? esc($diet['description']) : '' ?></textarea>
         </div>
       </div>
 
@@ -83,15 +83,15 @@
         <div class="field-row-3">
           <div class="field">
             <label><span style="color:#C0392B">●</span> Viande (%)</label>
-            <input type="number" name="viande_percent" id="viande" placeholder="Ex: 30" min="0" max="100" oninput="updateBar()">
+            <input type="number" name="viande_percent" id="viande" placeholder="Ex: 30" min="0" max="100" oninput="updateBar()" value="<?= isset($diet['viande_percent']) ? esc($diet['viande_percent']) : '' ?>">
           </div>
           <div class="field">
             <label><span style="color:#E67E22">●</span> Volaille (%)</label>
-            <input type="number" name="volaille_percent" id="volaille" placeholder="Ex: 40" min="0" max="100" oninput="updateBar()">
+            <input type="number" name="volaille_percent" id="volaille" placeholder="Ex: 40" min="0" max="100" oninput="updateBar()" value="<?= isset($diet['volaille_percent']) ? esc($diet['volaille_percent']) : '' ?>">
           </div>
           <div class="field">
             <label><span style="color:#2980B9">●</span> Poisson (%)</label>
-            <input type="number" name="poisson_percent" id="poisson" placeholder="Ex: 30" min="0" max="100" oninput="updateBar()">
+            <input type="number" name="poisson_percent" id="poisson" placeholder="Ex: 30" min="0" max="100" oninput="updateBar()" value="<?= isset($diet['poisson_percent']) ? esc($diet['poisson_percent']) : '' ?>">
           </div>
         </div>
 
@@ -141,8 +141,8 @@
           </div>
           <div class="field">
             <label>Quantité (kg/jour)</label>
-            <input type="number" name="variation_valeur" id="variation_valeur" placeholder="Ex: 0.10" step="0.01" min="0.01" max="1">
-            <input type="hidden" name="variation_poids_jour" id="hidden_variation">
+            <input type="number" name="variation_valeur" id="variation_valeur" placeholder="Ex: 0.10" step="0.01" min="0.01" max="1" value="<?= isset($diet['variation_poids_jour']) ? abs($diet['variation_poids_jour']) : '' ?>">
+            <input type="hidden" name="variation_poids_jour" id="hidden_variation" value="<?= isset($diet['variation_poids_jour']) ? esc($diet['variation_poids_jour']) : '' ?>">
           </div>
         </div>
       </div>
@@ -156,7 +156,7 @@
         <div class="sport-grid">
           <?php foreach ($sports as $sport): ?>
           <div class="sport-option">
-            <input type="radio" name="id_sport" id="sport_<?= $sport['id'] ?>" value="<?= $sport['id'] ?>">
+            <input type="radio" name="id_sport" id="sport_<?= $sport['id'] ?>" value="<?= $sport['id'] ?>" <?= (isset($diet['id_sport']) && $diet['id_sport'] == $sport['id']) ? 'checked' : '' ?> >
             <label for="sport_<?= $sport['id'] ?>">
               <i class="bi bi-activity"></i>
               <div>
@@ -181,12 +181,22 @@
           <p style="margin-bottom:8px; color:var(--text-muted);">Entrez une ou plusieurs durées (en jours) et leur prix. Cliquez sur + pour ajouter une ligne.</p>
 
           <div id="prixContainer">
-            <!-- Ligne initiale par défaut -->
-            <div class="prix-row dynamique" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-              <input type="number" name="duree[]" class="input-duree" placeholder="Durée (jours)" min="1" value="30" style="width:120px;">
-              <input type="number" name="prix[]" class="input-prix" placeholder="Prix en Ar" min="0" style="width:140px;">
-              <button type="button" class="btn-remove" onclick="removeDureeRow(this)" title="Supprimer" style="background:none;border:none;color:#A93226;font-size:18px;">&times;</button>
-            </div>
+            <?php if (isset($prixs) && is_array($prixs) && count($prixs) > 0): ?>
+              <?php foreach ($prixs as $pr): ?>
+                <div class="prix-row dynamique" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                  <input type="number" name="duree[]" class="input-duree" placeholder="Durée (jours)" min="1" value="<?= esc($pr['duree']) ?>" style="width:120px;">
+                  <input type="number" name="prix[]" class="input-prix" placeholder="Prix en Ar" min="0" value="<?= esc($pr['prix']) ?>" style="width:140px;">
+                  <button type="button" class="btn-remove" onclick="removeDureeRow(this)" title="Supprimer" style="background:none;border:none;color:#A93226;font-size:18px;">&times;</button>
+                </div>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <!-- Ligne initiale par défaut -->
+              <div class="prix-row dynamique" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                <input type="number" name="duree[]" class="input-duree" placeholder="Durée (jours)" min="1" value="30" style="width:120px;">
+                <input type="number" name="prix[]" class="input-prix" placeholder="Prix en Ar" min="0" style="width:140px;">
+                <button type="button" class="btn-remove" onclick="removeDureeRow(this)" title="Supprimer" style="background:none;border:none;color:#A93226;font-size:18px;">&times;</button>
+              </div>
+            <?php endif; ?>
           </div>
 
           <!-- Template caché pour une ligne -->
@@ -234,6 +244,20 @@ function updateBar() {
   el.textContent = total + '%';
   el.className = 'percent-total ' + (total === 100 ? 'ok' : (total > 100 ? 'error' : ''));
 }
+
+// Si on est en mode edit, initialiser certains champs (sélection radio, update bar, sens variation)
+document.addEventListener('DOMContentLoaded', function(){
+  <?php if (isset($diet)): ?>
+    // Mettre à jour la barre de pourcentage
+    updateBar();
+    // cocher le sens variation si défini
+    <?php if (isset($diet['variation_poids_jour'])): ?>
+      var v = parseFloat('<?= esc($diet['variation_poids_jour']) ?>');
+      if (!isNaN(v) && v < 0) document.getElementById('sens_moins').checked = true;
+      else if (!isNaN(v) && v > 0) document.getElementById('sens_plus').checked = true;
+    <?php endif; ?>
+  <?php endif; ?>
+});
 
 // Préparer la variation avant submit
 function prepareSubmit() {

@@ -14,6 +14,8 @@ $routes->post('api/complete-inscription', 'UserController::completeInscription')
 $routes->get('logout',          'UserController::logout');
 
 $routes->get('admin/regimes/create',    'RegimeController::form');
+// Edit regime
+$routes->get('admin/regimes/edit/(:num)',    'RegimeController::edit/$1');
 
 $routes->get('admin/dashboard', 'AdminController::dashboard');
 
@@ -21,6 +23,8 @@ $routes->get('admin/regimes',  'RegimeController::list');
 
 $routes->post('admin/regimes/save',  'RegimeController::save');
 
+$routes->post('admin/regimes/update/(:num)',  'RegimeController::update/$1');
+$routes->get('admin/regimes/delete/(:num)',  'RegimeController::delete/$1');
 // Sports CRUD
 $routes->get('admin/sports',          'SportController::list');
 $routes->get('admin/sports/create',   'SportController::form');
