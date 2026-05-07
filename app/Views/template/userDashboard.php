@@ -46,6 +46,11 @@
             <?= $isGold ? 'Compte Gold' : 'Compte Standard' ?>
           </span>
         </p>
+        <div style="margin-top:12px;">
+          <a href="<?= base_url('codepromo/form') ?>" style="display:inline-block; background:#1a73e8; color:white; padding:8px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;">
+            <i class="bi bi-plus-circle"></i> Créditer avec code promo
+          </a>
+        </div>
       </div>
     </div>
 

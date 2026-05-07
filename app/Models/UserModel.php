@@ -210,12 +210,19 @@ class UserModel extends Model
     // Calculer le solde du portefeuille
     public function getSolde(int $userId): float
     {
-        $db = \Config\Database::connect();
-        $row = $db->table('mouvement')
-                  ->where('id_user', $userId)
-                  ->orderBy('date_mouvement', 'DESC')
-                  ->limit(1)
-                  ->get()->getRow();
-        return $row ? (float)$row->montant_apres : 0.00;
+        // Utiliser MouvementModel pour obtenir le montant_apres du dernier mouvement
+        $mouvementModel = new \App\Models\MouvementModel();
+        return $mouvementModel->getLastBalance($userId);
+    }
+
+    /**
+     * Alias explicite pour récupérer le solde actuel (nom demandé par l'interface)
+     *
+     * @param int $userId
+     * @return float
+     */
+    public function getSoldeActuelle(int $userId): float
+    {
+        return $this->getSolde($userId);
     }
 }

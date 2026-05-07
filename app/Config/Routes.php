@@ -16,6 +16,13 @@ $routes->get('logout',          'UserController::logout');
 // Gold option
 $routes->get('gold/activate',   'GoldController::activate');
 
+// Code Promo
+$routes->get('codepromo/form',          'CodePromoController::form');
+$routes->post('codepromo/redeem',       'CodePromoController::redeem');
+$routes->get('admin/codepromo/create',  'CodePromoController::adminForm');
+$routes->post('admin/codepromo/create', 'CodePromoController::adminCreate');
+$routes->get('admin/codepromo/list',    'CodePromoController::adminList');
+
 // User dashboard
 $routes->get('dashboard', 'UserController::dashboard');
 $routes->get('profil',    'UserController::profil');

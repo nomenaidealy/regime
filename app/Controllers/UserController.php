@@ -317,12 +317,8 @@ class UserController extends Controller
             ->limit(1)
             ->get()->getRow();
 
-        $dernierMouvement = $db->table('mouvement')
-            ->where('id_user', $userId)
-            ->orderBy('date_mouvement', 'DESC')
-            ->limit(1)
-            ->get()->getRow();
-        $solde = $dernierMouvement ? (float)$dernierMouvement->montant_apres : 0.00;
+        // Solde
+        $solde = $userModel->getSoldeActuelle($userId);
 
         $isGold = $db->table('user_gold_at_time')
             ->where('id_user', $userId)
@@ -380,12 +376,8 @@ class UserController extends Controller
             ->get()->getRow();
 
         // Solde
-        $dernierMouvement = $db->table('mouvement')
-            ->where('id_user', $userId)
-            ->orderBy('date_mouvement', 'DESC')
-            ->limit(1)
-            ->get()->getRow();
-        $solde = $dernierMouvement ? (float)$dernierMouvement->montant_apres : 0.00;
+        // Solde
+        $solde = $userModel->getSoldeActuelle($userId);
 
         // Gold ?
         $isGold = $db->table('user_gold_at_time')

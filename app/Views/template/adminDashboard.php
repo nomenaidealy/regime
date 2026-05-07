@@ -19,6 +19,7 @@
         <li style="margin-bottom:8px;"><a href="<?= base_url('admin/dashboard') ?>">Dashboard</a></li>
         <li style="margin-bottom:8px;"><a href="<?= base_url('admin/regimes') ?>">Régimes</a></li>
         <li style="margin-bottom:8px;"><a href="<?= base_url('admin/sports') ?>">Activités sportives</a></li>
+        <li style="margin-bottom:8px;"><a href="<?= base_url('admin/codepromo/list') ?>">Codes Promo</a></li>
         <li style="margin-bottom:8px;"><a href="<?= base_url('profil') ?>">Utilisateurs</a></li>
       </ul>
     </nav>
