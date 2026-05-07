@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers;
 
 use App\Models\UserModel;
@@ -13,78 +14,78 @@ class UserController extends Controller
     {
         return view('template/inscription');
     }
-public function saveUser()
-{
-    $userModel = new UserModel();
-    $email     = $this->request->getPost('email');
+    public function saveUser()
+    {
+        $userModel = new UserModel();
+        $email     = $this->request->getPost('email');
 
-    // Email déjà utilisé ?
-    if ($userModel->where('email', $email)->first()) {
-        return redirect()->to('inscription')
-                         ->with('error', 'Cet email est déjà utilisé.');
-    }
-
-    $nom             = $this->request->getPost('nom');
-    $genre           = $this->request->getPost('genre');
-    $taille          = $this->request->getPost('taille');
-    $poids           = $this->request->getPost('poids');
-    $mdp             = $this->request->getPost('mdp');
-    $objectif        = $this->request->getPost('objectif');
-    $valeurObjectif  = $this->request->getPost('valeur_objectif');
-
-    // Si objectif = IMC idéal (3) → calculer automatiquement
-    if ($objectif == 3) {
-        $tailleEnCm = $taille * 100;
-        if ($genre == 'Femme') {
-            $poidsIdeal = $tailleEnCm - 100 - (($tailleEnCm - 150) / 2.5);
-        } else {
-            $poidsIdeal = $tailleEnCm - 100 - (($tailleEnCm - 150) / 4);
+        // Email déjà utilisé ?
+        if ($userModel->where('email', $email)->first()) {
+            return redirect()->to('inscription')
+                ->with('error', 'Cet email est déjà utilisé.');
         }
-        $valeurObjectif = round(abs($poids - $poidsIdeal), 2);
+
+        $nom             = $this->request->getPost('nom');
+        $genre           = $this->request->getPost('genre');
+        $taille          = $this->request->getPost('taille');
+        $poids           = $this->request->getPost('poids');
+        $mdp             = $this->request->getPost('mdp');
+        $objectif        = $this->request->getPost('objectif');
+        $valeurObjectif  = $this->request->getPost('valeur_objectif');
+
+        // Si objectif = IMC idéal (3) → calculer automatiquement
+        if ($objectif == 3) {
+            $tailleEnCm = $taille * 100;
+            if ($genre == 'Femme') {
+                $poidsIdeal = $tailleEnCm - 100 - (($tailleEnCm - 150) / 2.5);
+            } else {
+                $poidsIdeal = $tailleEnCm - 100 - (($tailleEnCm - 150) / 4);
+            }
+            $valeurObjectif = round(abs($poids - $poidsIdeal), 2);
+        }
+        // Objectif 1 ou 2 → valeur saisie par l'utilisateur (déjà dans $valeurObjectif)
+
+        // Insert user
+        $userModel->insert([
+            'nom'    => $nom,
+            'email'  => $email,
+            'genre'  => $genre,
+            'taille' => $taille,
+            'poids'  => $poids,
+            'mdp'    => password_hash($mdp, PASSWORD_DEFAULT),
+        ]);
+
+        $userId = $userModel->getInsertID();
+        $db     = \Config\Database::connect();
+
+        // Insert objectif
+        $db->table('user_objectif')->insert([
+            'id_user'         => $userId,
+            'id_objectif'     => $objectif,
+            'date_choix'      => date('Y-m-d H:i:s'),
+            'valeur_objectif' => $valeurObjectif,
+        ]);
+
+        // Session
+        session()->set([
+            'isLoggedIn' => true,
+            'user_id'    => $userId,
+            'user_nom'   => $nom,
+            'user_genre' => $genre,
+            'is_gold'    => false,
+            'solde'      => 0.00,
+        ]);
+
+        return redirect()->to('dashboard')
+            ->with('success', 'Bienvenue sur NutriPlan, ' . $nom . ' !');
     }
-    // Objectif 1 ou 2 → valeur saisie par l'utilisateur (déjà dans $valeurObjectif)
-
-    // Insert user
-    $userModel->insert([
-        'nom'    => $nom,
-        'email'  => $email,
-        'genre'  => $genre,
-        'taille' => $taille,
-        'poids'  => $poids,
-        'mdp'    => password_hash($mdp, PASSWORD_DEFAULT),
-    ]);
-
-    $userId = $userModel->getInsertID();
-    $db     = \Config\Database::connect();
-
-    // Insert objectif
-    $db->table('user_objectif')->insert([
-        'id_user'         => $userId,
-        'id_objectif'     => $objectif,
-        'date_choix'      => date('Y-m-d H:i:s'),
-        'valeur_objectif' => $valeurObjectif,
-    ]);
-
-    // Session
-    session()->set([
-        'isLoggedIn' => true,
-        'user_id'    => $userId,
-        'user_nom'   => $nom,
-        'user_genre' => $genre,
-        'is_gold'    => false,
-        'solde'      => 0.00,
-    ]);
-
-    return redirect()->to('dashboard')
-                     ->with('success', 'Bienvenue sur NutriPlan, ' . $nom . ' !');
-}
 
     // ─────────────────────────────────────────
     // LOGIN
     // ─────────────────────────────────────────
     public function loginPage()
     {
-        return view('login');
+        return view('/template/user/login');
     }
 
     public function login()
@@ -93,25 +94,24 @@ public function saveUser()
         $email     = $this->request->getPost('email');
         $mdp       = $this->request->getPost('mdp');
 
-        $user = $userModel->where('email', $email)->first();
-
-        if (!$user || !password_verify($mdp, $user['mdp'])) {
-            return redirect()->to('login')
-                             ->with('error', 'Email ou mot de passe incorrect.');
+        $result = $userModel->verifyUser($email, $mdp);
+        if (!$result['success']) {
+            return redirect()->to('login')->with('login_error', $result['message']);
         }
+        $user = $result['user'];
 
         // Vérifier si Gold
         $db     = \Config\Database::connect();
         $isGold = $db->table('user_gold_at_time')
-                     ->where('id_user', $user['id'])
-                     ->countAllResults() > 0;
+            ->where('id_user', $user['id'])
+            ->countAllResults() > 0;
 
         // Calculer solde
         $dernierMouvement = $db->table('mouvement')
-                               ->where('id_user', $user['id'])
-                               ->orderBy('date_mouvement', 'DESC')
-                               ->limit(1)
-                               ->get()->getRow();
+            ->where('id_user', $user['id'])
+            ->orderBy('date_mouvement', 'DESC')
+            ->limit(1)
+            ->get()->getRow();
         $solde = $dernierMouvement ? (float)$dernierMouvement->montant_apres : 0.00;
 
         // Créer session
@@ -126,7 +126,7 @@ public function saveUser()
         ]);
 
         return redirect()->to('dashboard')
-                         ->with('success', 'Bon retour, ' . $user['nom'] . ' !');
+            ->with('success', 'Bon retour, ' . $user['nom'] . ' !');
     }
 
     // ─────────────────────────────────────────
@@ -136,7 +136,7 @@ public function saveUser()
     {
         session()->destroy();
         return redirect()->to('login')
-                         ->with('success', 'Vous êtes déconnecté.');
+            ->with('success', 'Vous êtes déconnecté.');
     }
 
     // ─────────────────────────────────────────
@@ -155,24 +155,24 @@ public function saveUser()
 
         // Objectif actuel
         $objectif = $db->table('user_objectif uo')
-                       ->join('objectif o', 'o.id = uo.id_objectif')
-                       ->where('uo.id_user', $userId)
-                       ->orderBy('uo.date_choix', 'DESC')
-                       ->limit(1)
-                       ->get()->getRow();
+            ->join('objectif o', 'o.id = uo.id_objectif')
+            ->where('uo.id_user', $userId)
+            ->orderBy('uo.date_choix', 'DESC')
+            ->limit(1)
+            ->get()->getRow();
 
         // Solde
         $dernierMouvement = $db->table('mouvement')
-                               ->where('id_user', $userId)
-                               ->orderBy('date_mouvement', 'DESC')
-                               ->limit(1)
-                               ->get()->getRow();
+            ->where('id_user', $userId)
+            ->orderBy('date_mouvement', 'DESC')
+            ->limit(1)
+            ->get()->getRow();
         $solde = $dernierMouvement ? (float)$dernierMouvement->montant_apres : 0.00;
 
         // Gold ?
         $isGold = $db->table('user_gold_at_time')
-                     ->where('id_user', $userId)
-                     ->countAllResults() > 0;
+            ->where('id_user', $userId)
+            ->countAllResults() > 0;
 
         return view('profil', [
             'user'     => $user,
@@ -194,21 +194,21 @@ public function saveUser()
 
         // Vérifier si code existe et non utilisé
         $codePromo = $db->table('code_promo')
-                        ->where('code', $code)
-                        ->where('id_user_utilise', null)
-                        ->get()->getRow();
+            ->where('code', $code)
+            ->where('id_user_utilise', null)
+            ->get()->getRow();
 
         if (!$codePromo) {
             return redirect()->back()
-                             ->with('error', 'Code invalide ou déjà utilisé.');
+                ->with('error', 'Code invalide ou déjà utilisé.');
         }
 
         // Solde actuel
         $dernierMouvement = $db->table('mouvement')
-                               ->where('id_user', $userId)
-                               ->orderBy('date_mouvement', 'DESC')
-                               ->limit(1)
-                               ->get()->getRow();
+            ->where('id_user', $userId)
+            ->orderBy('date_mouvement', 'DESC')
+            ->limit(1)
+            ->get()->getRow();
         $soldeCourant = $dernierMouvement ? (float)$dernierMouvement->montant_apres : 0.00;
         $nouveauSolde = $soldeCourant + $codePromo->montant;
 
@@ -217,22 +217,22 @@ public function saveUser()
             'id_user'      => $userId,
             'montant'      => $codePromo->montant,
             'type'         => 'CREDIT',
-            'montant_apres'=> $nouveauSolde,
+            'montant_apres' => $nouveauSolde,
             'description'  => 'Code promo : ' . $code,
         ]);
 
         // Marquer code utilisé
         $db->table('code_promo')
-           ->where('id', $codePromo->id)
-           ->update([
-               'id_user_utilise'  => $userId,
-               'date_utilisation' => date('Y-m-d H:i:s'),
-           ]);
+            ->where('id', $codePromo->id)
+            ->update([
+                'id_user_utilise'  => $userId,
+                'date_utilisation' => date('Y-m-d H:i:s'),
+            ]);
 
         // Mettre à jour session
         session()->set('solde', $nouveauSolde);
 
         return redirect()->back()
-                         ->with('success', 'Portefeuille rechargé de ' . number_format($codePromo->montant, 0, ',', ' ') . ' Ar !');
+            ->with('success', 'Portefeuille rechargé de ' . number_format($codePromo->montant, 0, ',', ' ') . ' Ar !');
     }
 }

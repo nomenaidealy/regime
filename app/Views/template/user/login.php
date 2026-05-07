@@ -67,7 +67,7 @@
 				</div>
 
 				<?php if (session('login_error')): ?>
-					<div class="err-msg" style="margin-bottom:10px;"><?= session('login_error') ?></div>
+					<div class="err-msg" style="margin-bottom:10px;color:#A32D2D;"><?= session('login_error') ?></div>
 				<?php endif; ?>
 
 				<button class="btn-next" type="submit"><i class="bi bi-box-arrow-in-right"></i> Se connecter</button>
