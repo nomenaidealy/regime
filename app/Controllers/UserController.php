@@ -4,7 +4,7 @@ namespace App\Controllers;
 use App\Models\UserModel;
 use CodeIgniter\Controller;
 
-class User extends Controller
+class UserController extends Controller
 {
     // ─────────────────────────────────────────
     // INSCRIPTION
