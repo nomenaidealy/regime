@@ -43,7 +43,14 @@ class UserModel extends Model
     {
         return $this->where('email', $email)->first();
     }
-
+      public function verifyUser(string $email, string $mdp)
+    {
+        $user = $this->where('email', $email)->first();
+        if ($user && $user['mdp'] === $mdp) {
+            return $user;
+        }
+        return null;
+    }
     // Vérifier si un user est Gold
     public function isGold(int $userId): bool
     {
