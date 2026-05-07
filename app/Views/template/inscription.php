@@ -46,8 +46,16 @@
 
 <!-- RIGHT PANEL -->
 <div class="right-panel">
+    <form action="<?= base_url('inscription') ?>" method="POST" id="inscriptionForm"><?= csrf_field() ?>
 
-  <!-- progress dots -->
+      <input type="hidden" name="nom"      id="hidden_nom">
+      <input type="hidden" name="email"    id="hidden_email">
+      <input type="hidden" name="genre"    id="hidden_genre">
+      <input type="hidden" name="taille"   id="hidden_taille">
+      <input type="hidden" name="poids"    id="hidden_poids">
+      <input type="hidden" name="objectif" id="hidden_objectif">
+      <input type="hidden" name="mdp"      id="hidden_mdp">
+    <!-- progress dots -->
   <div class="progress-dots" id="progressDots">
     <div class="dot active"></div>
     <div class="dot inactive"></div>
@@ -56,6 +64,8 @@
 
   <!-- STEP 1 : Infos personnelles -->
   <div class="form-step active" id="step1">
+
+
     <div class="step-header">
       <div class="step-tag">Étape 1 sur 3</div>
       <h2>Informations personnelles</h2>
@@ -193,7 +203,7 @@
     <p>Bienvenue sur NutriPlan. Votre profil est prêt, découvrez les régimes adaptés à vos objectifs.</p>
     <a href="accueil.html" class="btn-go">Voir mon tableau de bord →</a>
   </div>
-
+</form>
 </div>
 
 <script>
@@ -280,11 +290,25 @@ function updateLeftSteps() {
 
 function submit() {
   if (!validate(3)) return;
-  document.getElementById('step3').classList.remove('active');
-  document.getElementById('successScreen').classList.add('active');
-  document.getElementById('progressDots').style.display = 'none';
-}
 
+  // Stocker toutes les valeurs dans les champs cachés
+  document.getElementById('hidden_nom').value      = document.getElementById('nom').value;
+  document.getElementById('hidden_email').value    = document.getElementById('email').value;
+  document.getElementById('hidden_taille').value   = document.getElementById('taille').value;
+  document.getElementById('hidden_poids').value    = document.getElementById('poids').value;
+  document.getElementById('hidden_mdp').value      = document.getElementById('mdp').value;
+
+  // Genre (radio)
+  const genre = document.querySelector('input[name="genre"]:checked');
+  if (genre) document.getElementById('hidden_genre').value = genre.value;
+
+  // Objectif (radio)
+  const objectif = document.querySelector('input[name="objectif"]:checked');
+  if (objectif) document.getElementById('hidden_objectif').value = objectif.value;
+
+  // Soumettre vers CodeIgniter
+  document.getElementById('inscriptionForm').submit();
+}
 function togglePwd(id, btn) {
   const input = document.getElementById(id);
   if (input.type === 'password') { input.type = 'text'; btn.innerHTML = '<i class="bi bi-eye-slash"></i>'; }
