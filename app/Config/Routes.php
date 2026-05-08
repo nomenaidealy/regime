@@ -1,7 +1,15 @@
 
 <?php
 use CodeIgniter\Router\RouteCollection;
+
+
 /** @var RouteCollection $routes */
+
+$routes->get('inscription',   'InscriptionController::index');
+$routes->post('api/validate-step1', 'InscriptionController::validateStep1');
+$routes->post('api/validate-step2', 'InscriptionController::validateStep2');
+$routes->post('api/validate-step3', 'InscriptionController::validateStep3');
+$routes->post('api/inscription-complete', 'InscriptionController::complete');
 
 $routes->get('/',              'Home::index');
 $routes->get('login',           'UserController::loginPage');
