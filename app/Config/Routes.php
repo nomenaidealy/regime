@@ -22,7 +22,7 @@ $routes->post('codepromo/redeem',       'CodePromoController::redeem');
 $routes->get('admin/codepromo/create',  'CodePromoController::adminForm');
 $routes->post('admin/codepromo/create', 'CodePromoController::adminCreate');
 $routes->get('admin/codepromo/list',    'CodePromoController::adminList');
-
+$routes->get('admin/codepromo/demandes',    'CodePromoController::adminDemandes');
 // User dashboard
 $routes->get('dashboard', 'UserController::dashboard');
 $routes->get('profil',    'UserController::profil');

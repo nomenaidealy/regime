@@ -17,8 +17,17 @@
         <a href="<?= base_url('/') ?>#mission">Notre mission</a>
         <a href="<?= base_url('/') ?>#fonctionnalites">Fonctionnalités</a>
         <a href="<?= base_url('/') ?>#gold">Option Gold</a>
-        <a href="<?= base_url('login') ?>">Se connecter</a>
-        <a href="<?= base_url('inscription') ?>" class="btn-nav">Commencer</a>
+        <?php if (session()->get('isLoggedIn')): ?>
+            <?php if (session()->get('is_admin')): ?>
+                <a href="<?= base_url('admin/dashboard') ?>">Mon dashboard</a>
+            <?php else: ?>
+                <a href="<?= base_url('dashboard') ?>">Mon dashboard</a>
+            <?php endif; ?>
+            <a href="<?= base_url('logout') ?>">Se déconnecter</a>
+        <?php else: ?>
+            <a href="<?= base_url('login') ?>">Se connecter</a>
+            <a href="<?= base_url('inscription') ?>" class="btn-nav">Commencer</a>
+        <?php endif; ?>
     </div>
 </nav>
 
