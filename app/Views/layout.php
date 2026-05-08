@@ -89,7 +89,7 @@
       <a href="<?= base_url('/') ?>#mission">Notre mission</a>
       <a href="<?= base_url('/') ?>#fonctionnalites">Fonctionnalités</a>
       <a href="<?= base_url('/') ?>#gold">Option Gold</a>
-      <a href="<?= base_url('user/dashboard') ?>">Mon tableau de bord</a>
+      <a href="<?= base_url('user/mes-regimes') ?>">Mes régimes</a>
       <a href="<?= base_url('user/profil') ?>">Profil</a>
       <a href="<?= base_url('logout') ?>" class="btn-nav">Déconnexion</a>
 

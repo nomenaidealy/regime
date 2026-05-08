@@ -263,17 +263,25 @@ class UserController extends Controller
             'solde'      => $solde,
         ]);
 
-        return redirect()->to('/dashboard')->with('success', 'Bon retour, ' . $user['nom'] . ' !');
+        return redirect()->to('/mes-regimes')->with('success', 'Bon retour, ' . $user['nom'] . ' !');
     }
 
     /**
-     * User dashboard: show IMC, current objectif, solde and active subscriptions
+     * Ancien dashboard conservé pour compatibilité : redirige vers Mes régimes.
      */
     public function dashboard()
     {
+        return redirect()->to('/mes-regimes');
+    }
+
+    /**
+     * Page Mes régimes : suggestions de régimes + abonnements de l'utilisateur
+     */
+    public function mesRegimes()
+    {
         $userId = session()->get('user_id');
         if (!$userId) {
-            return redirect()->to('login')->with('error', 'Connectez-vous pour voir le tableau de bord.');
+            return redirect()->to('login')->with('error', 'Connectez-vous pour voir vos régimes.');
         }
 
         $userModel = new UserModel();
@@ -300,7 +308,15 @@ class UserController extends Controller
             ->where('id_user', $userId)
             ->countAllResults() > 0;
 
-        // Subscriptions
+        // Suggestions de régimes
+        $suggestions = $db->table('diet d')
+            ->select('d.id AS diet_id, d.nom AS diet_nom, d.description AS diet_description, d.variation_poids_jour, d.viande_percent, d.volaille_percent, d.poisson_percent, s.libelle AS sport_libelle, s.variation_poids_seance, dp.prix AS prix_30, dp.id AS prix_id')
+            ->join('sport s', 's.id = d.id_sport', 'left')
+            ->join('diet_prix dp', 'dp.id_diet = d.id AND dp.duree = 30', 'left')
+            ->orderBy('d.nom', 'ASC')
+            ->get()->getResultArray();
+
+        // Abonnements
         $subscriptions = $db->table('user_diet ud')
             ->select('ud.*, dp.duree, dp.prix, d.nom AS diet_nom')
             ->join('diet_prix dp', 'dp.id = ud.id_diet_prix')
@@ -309,13 +325,51 @@ class UserController extends Controller
             ->orderBy('ud.date_debut', 'DESC')
             ->get()->getResultArray();
 
-        return view('template/userDashboard', [
+        return view('template/mesRegimes', [
             'user' => $user,
             'imc' => $imc,
             'objectif' => $objectif,
             'solde' => $solde,
             'isGold' => $isGold,
+            'suggestions' => $suggestions,
             'subscriptions' => $subscriptions,
+        ]);
+    }
+
+    /**
+     * Détails d'une suggestion de régime
+     */
+    public function regimeDetails($id)
+    {
+        $userId = session()->get('user_id');
+        if (!$userId) {
+            return redirect()->to('login')->with('error', 'Connectez-vous pour voir les détails.');
+        }
+
+        if (!$id || !is_numeric($id)) {
+            return redirect()->to('/mes-regimes')->with('error', 'Régime introuvable.');
+        }
+
+        $db = \Config\Database::connect();
+
+        $regime = $db->table('diet d')
+            ->select('d.id AS diet_id, d.nom AS diet_nom, d.description AS diet_description, d.variation_poids_jour, d.viande_percent, d.volaille_percent, d.poisson_percent, s.libelle AS sport_libelle, s.description AS sport_description, s.variation_poids_seance')
+            ->join('sport s', 's.id = d.id_sport', 'left')
+            ->where('d.id', $id)
+            ->get()->getRowArray();
+
+        if (!$regime) {
+            return redirect()->to('/mes-regimes')->with('error', 'Régime introuvable.');
+        }
+
+        $prixs = $db->table('diet_prix')
+            ->where('id_diet', $id)
+            ->orderBy('duree', 'ASC')
+            ->get()->getResultArray();
+
+        return view('template/regimeDetails', [
+            'regime' => $regime,
+            'prixs' => $prixs,
         ]);
     }
 
@@ -360,12 +414,23 @@ class UserController extends Controller
             ->where('id_user', $userId)
             ->countAllResults() > 0;
 
+        // Régime en cours / dernier régime souscrit
+        $regimeActuel = $db->table('user_diet ud')
+            ->select('ud.date_debut, ud.prix_paye, ud.remise_gold, dp.duree, dp.prix, d.nom AS diet_nom, d.description AS diet_description')
+            ->join('diet_prix dp', 'dp.id = ud.id_diet_prix')
+            ->join('diet d', 'd.id = dp.id_diet')
+            ->where('ud.id_user', $userId)
+            ->orderBy('ud.date_debut', 'DESC')
+            ->limit(1)
+            ->get()->getRow();
+
         return view('profil', [
             'user'     => $user,
             'imc'      => $imc,
             'objectif' => $objectif,
             'solde'    => $solde,
             'isGold'   => $isGold,
+            'regimeActuel' => $regimeActuel,
         ]);
     }
 

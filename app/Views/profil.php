@@ -34,6 +34,12 @@
         <p><strong>Genre :</strong> <?= esc($user['genre']) ?></p>
         <p><strong>IMC :</strong> <?= esc($imc) ?></p>
         <p><strong>Objectif :</strong> <?= esc($objectif ? $objectif->libelle : '—') ?></p>
+
+        <div style="margin-top:14px; padding:14px; border:2px solid #1a73e8; border-radius:12px; background:#eef5ff;">
+          <div style="font-size:13px; font-weight:700; color:#1a73e8; text-transform:uppercase; margin-bottom:8px;">Régime conseillé</div>
+          <p style="margin:0 0 6px 0;"><strong>Régime à suivre :</strong> <?= esc($regimeActuel ? $regimeActuel->diet_nom : '—') ?></p>
+          <p style="margin:0;"><strong>Durée :</strong> <?= esc($regimeActuel ? $regimeActuel->duree . ' jours' : '—') ?></p>
+        </div>
       </div>
 
       <div style="flex:1 1 300px; background:#fff; padding:18px; border-radius:12px;">

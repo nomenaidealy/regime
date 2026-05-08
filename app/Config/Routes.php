@@ -25,8 +25,10 @@ $routes->get('codepromo/form',          'CodePromoController::form');
 $routes->post('codepromo/redeem',       'CodePromoController::redeem');
 $routes->get('codepromo/mesDemandes',    'CodePromoController::mesDemandes');
 
-// User dashboard
+// User pages
 $routes->get('dashboard', 'UserController::dashboard');
+$routes->get('mes-regimes', 'UserController::mesRegimes');
+$routes->get('mes-regimes/(:num)', 'UserController::regimeDetails/$1');
 $routes->get('profil',    'UserController::profil');
 
 $routes->group('user', ['filter' => 'user'], static function ($routes) {
