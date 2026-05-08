@@ -66,12 +66,20 @@ CREATE TABLE users (
     date_inscription DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE gold (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    prix DECIMAL(10,2) NOT NULL,
+    date_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 7. GOLD USER
 CREATE TABLE user_gold_at_time (
     id              INT PRIMARY KEY AUTO_INCREMENT,
     id_user         INT NOT NULL,
+    id_gold         INT NOT NULL,
     date_achat_gold DATETIME DEFAULT NULL,
-    FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_gold) REFERENCES gold(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 8. MOUVEMENT

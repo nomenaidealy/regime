@@ -18,7 +18,7 @@ $routes->get('admin',           'AdminController::index');
 $routes->post('admin/tolog',    'AdminController::tolog');
 
 // Gold option
-$routes->get('gold/activate',   'GoldController::activate');
+$routes->get('gold/activate',   'UserGoldController::activate');
 
 // Code Promo
 $routes->get('codepromo/form',          'CodePromoController::form');

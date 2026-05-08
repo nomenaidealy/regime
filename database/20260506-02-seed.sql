@@ -43,10 +43,13 @@ INSERT INTO users (nom, email, genre, mdp, taille, poids) VALUES
 ('David Moreau',  'david@example.com', 'Homme', 'david123', 1.75, 77.50),
 ('Eva Simon',     'eva@example.com',   'Femme', 'eva123',   1.70, 62.00);
 
+
+INSERT INTO gold(prix , date_update) VALUES 
+(150000 , '2026-04-01 10:00:00') ;
 -- 7. GOLD
-INSERT INTO user_gold_at_time (id_user, date_achat_gold) VALUES
-(2, '2026-04-01 10:00:00'),
-(5, '2026-03-15 12:30:00');
+INSERT INTO user_gold_at_time (id_user, id_gold, date_achat_gold) VALUES
+(2, 1, '2026-04-01 10:00:00'),
+(5, 1, '2026-03-15 12:30:00');
 
 -- 8. MOUVEMENTS
 -- Soldes initiaux
