@@ -21,6 +21,9 @@ $routes->post('admin/tolog',    'AdminController::tolog');
 $routes->get('gold/activate',   'GoldController::activate');
 
 // Code Promo
+$routes->get('codepromo/form',          'CodePromoController::form');
+$routes->post('codepromo/redeem',       'CodePromoController::redeem');
+$routes->get('codepromo/mesDemandes',    'CodePromoController::mesDemandes');
 
 // User dashboard
 $routes->get('dashboard', 'UserController::dashboard');
@@ -32,9 +35,11 @@ $routes->group('admin', ['filter' => 'admin'], static function ($routes) {
 	$routes->get('logout', 'AdminController::logout');
 	$routes->get('codepromo/create',  'CodePromoController::adminForm');
 	$routes->post('codepromo/create', 'CodePromoController::adminCreate');
-	$routes->get('codepromo/demandes',    'CodePromoController::adminDemandes');
-    $routes->get('codepromo/list',    'CodePromoController::adminList');
-    $routes->post('codepromo/redeem',       'CodePromoController::redeem');
+	$routes->get('codepromo/demandes',   'CodePromoController::adminDemandes');
+	$routes->get('codepromo/list',    'CodePromoController::adminList');
+	$routes->post('codepromo/valider', 'CodePromoController::adminValider');
+	$routes->post('codepromo/rejeter',  'CodePromoController::adminRejeter');
+	$routes->get('codepromo/notifications', 'CodePromoController::adminNotifications');
 
 	// Edit regime
 	$routes->get('regimes/create',        'RegimeController::form');

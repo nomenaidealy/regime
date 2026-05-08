@@ -40,6 +40,7 @@ class CodePromoModel extends Model
     protected $cleanValidationRules = true;
 
    
+    //? à revoir :
     public function getAvailableCode(string $code, int $userId): ?array
     {
         $codeData = $this->where('code', $code)->first();
@@ -50,11 +51,31 @@ class CodePromoModel extends Model
 
         $db = \Config\Database::connect();
         $alreadyUsed = $db->table('demande_code_promo')
-            ->where('id_code_promo', $codeData['id'])
             ->where('id_user', $userId)
-            ->whereIn('statut', ['EN_ATTENTE', 'VALIDE'])
+            ->where('id_code_promo', $codeData['id'])
             ->countAllResults();
 
         return $alreadyUsed > 0 ? null : $codeData;
+    }
+
+    /**
+     * Retourne la liste des codes avec leurs statistiques de demandes.
+     */
+    public function getAllWithDemandStats(): array
+    {
+        return $this->db->table('code_promo cp')
+            ->select(
+                'cp.id, cp.code, cp.montant,
+                 COUNT(dc.id) AS total_demandes,
+                 SUM(CASE WHEN dc.statut = "EN_ATTENTE" THEN 1 ELSE 0 END) AS demandes_en_attente,
+                 SUM(CASE WHEN dc.statut = "VALIDE" THEN 1 ELSE 0 END) AS demandes_validees,
+                 SUM(CASE WHEN dc.statut = "REJETE" THEN 1 ELSE 0 END) AS demandes_rejetees,
+                 MAX(dc.date_demande) AS derniere_demande'
+            )
+            ->join('demande_code_promo dc', 'dc.id_code_promo = cp.id', 'left')
+            ->groupBy('cp.id, cp.code, cp.montant')
+            ->orderBy('cp.code', 'ASC')
+            ->get()
+            ->getResultArray();
     }
 }

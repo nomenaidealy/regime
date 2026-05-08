@@ -141,7 +141,7 @@ class CodePromoController extends Controller
         }
 
         return view('template/codePromoAdminList', [
-            'codes' => $this->codePromoModel->findAll(),
+            'codes' => $this->codePromoModel->getAllWithDemandStats(),
         ]);
     }
   

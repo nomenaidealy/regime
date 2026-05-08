@@ -14,10 +14,18 @@
     <div class="nav-logo">Nutri<span>Plan</span></div>
     <div class="nav-links">
         <?php if (session()->get('is_admin')): ?>
+            <?php $notifCount = (new \App\Models\NotificationAdminModel())->countNonLues(); ?>
+            <a href="<?= base_url('admin/codepromo/demandes') ?>" style="position:relative; display:inline-flex; align-items:center; gap:8px; background:#fff3cd; color:#8a6d3b; border:1px solid #f0c36d; padding:10px 14px; border-radius:999px; text-decoration:none; font-weight:700;">
+                <i class="bi bi-bell-fill"></i>
+                <span>Notifications</span>
+                <?php if ($notifCount > 0): ?>
+                    <span style="position:absolute; top:-7px; right:-7px; min-width:22px; height:22px; padding:0 6px; display:inline-flex; align-items:center; justify-content:center; background:#e74c3c; color:#fff; border-radius:999px; font-size:11px; font-weight:700; box-shadow:0 2px 6px rgba(0,0,0,.15);"><?= esc($notifCount) ?></span>
+                <?php endif; ?>
+            </a>
             <a href="<?= base_url('admin/regimes') ?>">Régimes</a>
             <a href="<?= base_url('admin/sports') ?>">Activités Sportives</a>
             <a href="<?= base_url('admin/codepromo/demandes') ?>">Demande Codes Promo</a>
-            <a href="<?= base_url('admin/codepromo/list') ?>">listes Codes Promo</a>
+            <a href="<?= base_url('admin/codepromo/list') ?>">Codes Promo</a>
             <a href="<?= base_url('admin/dashboard') ?>">Dashboard admin</a>
             <a href="<?= base_url('admin/logout') ?>" class="btn-nav">Déconnexion admin</a>
         <?php elseif (session()->get('user_id')): ?>
