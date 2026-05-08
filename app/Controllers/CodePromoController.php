@@ -126,7 +126,7 @@ class CodePromoController extends Controller
         }
 
         if ($this->codePromoModel->save($data)) {
-            return redirect()->to('admin/codepromo/list')
+            return redirect()->to('/admin/codepromo/list')
                 ->with('success', "Code '{$data['code']}' créé avec succès");
         }
 

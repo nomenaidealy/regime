@@ -16,7 +16,8 @@
         <?php if (session()->get('is_admin')): ?>
             <a href="<?= base_url('admin/regimes') ?>">Régimes</a>
             <a href="<?= base_url('admin/sports') ?>">Activités Sportives</a>
-            <a href="<?= base_url('admin/codepromo/list') ?>">Codes Promo</a>
+            <a href="<?= base_url('admin/codepromo/demandes') ?>">Demande Codes Promo</a>
+            <a href="<?= base_url('admin/codepromo/list') ?>">listes Codes Promo</a>
             <a href="<?= base_url('admin/dashboard') ?>">Dashboard admin</a>
             <a href="<?= base_url('admin/logout') ?>" class="btn-nav">Déconnexion admin</a>
         <?php elseif (session()->get('user_id')): ?>
