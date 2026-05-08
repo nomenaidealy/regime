@@ -28,9 +28,9 @@ class Database extends Config
         'DSN'          => '',
         // Use 127.0.0.1 to force TCP (avoids socket "No such file or directory" errors)
         'hostname'     => '127.0.0.1',
-        'username'     => 'root',
-        'password'     => '',
-        'database'     => 'notes_itu',
+        'username'     => 'tomefy',
+        'password'     => 'etu003948',
+        'database'     => 'diet',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,
