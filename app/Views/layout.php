@@ -13,12 +13,29 @@
 <nav>
     <div class="nav-logo">Nutri<span>Plan</span></div>
     <div class="nav-links">
-        <a href="<?= base_url('/') ?>#about">À propos</a>
-        <a href="<?= base_url('/') ?>#mission">Notre mission</a>
-        <a href="<?= base_url('/') ?>#fonctionnalites">Fonctionnalités</a>
-        <a href="<?= base_url('/') ?>#gold">Option Gold</a>
-        <a href="<?= base_url('login') ?>">Se connecter</a>
-        <a href="<?= base_url('inscription') ?>" class="btn-nav">Commencer</a>
+        <?php if (session()->get('is_admin')): ?>
+            <a href="<?= base_url('admin/regimes') ?>">Régimes</a>
+            <a href="<?= base_url('admin/sports') ?>">Activités Sportives</a>
+            <a href="<?= base_url('admin/codepromo/list') ?>">Codes Promo</a>
+            <a href="<?= base_url('admin/dashboard') ?>">Dashboard admin</a>
+            <a href="<?= base_url('admin/logout') ?>" class="btn-nav">Déconnexion admin</a>
+        <?php elseif (session()->get('user_id')): ?>
+            <a href="<?= base_url('/') ?>#about">À propos</a>
+            <a href="<?= base_url('/') ?>#mission">Notre mission</a>
+            <a href="<?= base_url('/') ?>#fonctionnalites">Fonctionnalités</a>
+            <a href="<?= base_url('/') ?>#gold">Option Gold</a>
+            <a href="<?= base_url('dashboard') ?>">Mon tableau de bord</a>
+            <a href="<?= base_url('profil') ?>">Profil</a>
+            <a href="<?= base_url('logout') ?>" class="btn-nav">Déconnexion</a>
+        <?php else: ?>
+            <a href="<?= base_url('/') ?>#about">À propos</a>
+            <a href="<?= base_url('/') ?>#mission">Notre mission</a>
+            <a href="<?= base_url('/') ?>#fonctionnalites">Fonctionnalités</a>
+            <a href="<?= base_url('/') ?>#gold">Option Gold</a>
+            <a href="<?= base_url('login') ?>">Se connecter</a>
+            <a href="<?= base_url('admin') ?>" class="btn-nav">Connexion admin</a>
+            <a href="<?= base_url('inscription') ?>" class="btn-nav">Commencer</a>
+        <?php endif; ?>
     </div>
 </nav>
 

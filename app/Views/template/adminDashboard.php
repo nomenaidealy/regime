@@ -4,7 +4,7 @@
 
 <?= $this->section('content') ?>
 
-<link href="<?= base_url('assets/template/regimeForm.css') ?>" rel="stylesheet">">
+<link href="<?= base_url('assets/template/regimeForm.css') ?>" rel="stylesheet">
 
 <div class="regime-container">
 
@@ -25,6 +25,8 @@
     </nav>
     <div class="regime-left-bottom">
       <a href="<?= base_url('/') ?>"><i class="bi bi-arrow-left"></i> Retour au site</a>
+      <br>
+      <a href="<?= base_url('admin/logout') ?>"><i class="bi bi-box-arrow-right"></i> Déconnexion</a>
     </div>
   </div>
 

@@ -229,39 +229,15 @@ class UserController extends Controller
         $email     = $this->request->getPost('email');
         $mdp       = $this->request->getPost('mdp');
 
-        $db = \Config\Database::connect();
-
-        // Check admin table first (admin.login stores the admin identifier)
-        $adminRow = $db->table('admin')->where('login', $email)->get()->getRowArray();
-        if ($adminRow) {
-            // Admin password may be stored hashed or plain; try password_verify first then plain compare
-            $stored = $adminRow['mdp'] ?? '';
-            $ok = false;
-            if ($stored && password_verify($mdp, $stored)) {
-                $ok = true;
-            } elseif ($stored === $mdp) {
-                $ok = true;
-            }
-
-            if ($ok) {
-                // Set admin session
-                session()->set([
-                    'isLoggedIn' => true,
-                    'is_admin'   => true,
-                    'admin_login'=> $adminRow['login'],
-                ]);
-                return redirect()->to('/admin/dashboard')->with('success', 'Bienvenue, administrateur.');
-            }
-
-            return redirect()->to('login')->with('login_error', 'Identifiants administrateur invalides.');
-        }
-
-        // Not admin — normal user flow
         $result = $userModel->verifyUser($email, $mdp);
         if (!$result['success']) {
             return redirect()->to('login')->with('login_error', $result['message']);
         }
         $user = $result['user'];
+
+        session()->remove(['is_admin', 'admin_id', 'admin_login']);
+
+        $db = \Config\Database::connect();
 
         // Vérifier si Gold
         $isGold = $db->table('user_gold_at_time')
