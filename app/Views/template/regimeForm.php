@@ -4,7 +4,7 @@
 
 <?= $this->section('content') ?>
 
-<link href="<?= base_url('assets/template/regimeForm.css') ?>" rel="stylesheet">">
+<link href="<?= base_url('assets/template/regimeForm.css') ?>" rel="stylesheet">
 <style>
 </style>
 

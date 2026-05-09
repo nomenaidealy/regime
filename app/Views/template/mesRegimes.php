@@ -4,7 +4,7 @@
 
 <?= $this->section('content') ?>
 
-<link href="<?= base_url('assets/template/regimeForm.css') ?>" rel="stylesheet">">
+<link href="<?= base_url('assets/template/regimeForm.css') ?>" rel="stylesheet">
 
 <div class="regime-container">
 
@@ -27,13 +27,13 @@
     </div>
 
     <?php if (session()->getFlashdata('error')): ?>
-      <div style="background:#fdecea; color:#a94442; border:1px solid #f5c6cb; padding:12px 14px; border-radius:10px; margin-bottom:14px; font-weight:600;">
+      <div style="background:#fdecea; color:#a94442; border:1px solid #f5c6cb; padding:12px 14px; border-radius:10px; margin-bottom:14px; font-weight:600; max-width:100%; box-sizing:border-box; white-space:normal; overflow-wrap:anywhere; word-break:break-word; line-height:1.45;">
         <?= esc(session()->getFlashdata('error')) ?>
       </div>
     <?php endif; ?>
 
     <?php if (session()->getFlashdata('success')): ?>
-      <div style="background:#e9f7ef; color:#145a32; border:1px solid #c3e6cb; padding:12px 14px; border-radius:10px; margin-bottom:14px; font-weight:600;">
+      <div style="background:#e9f7ef; color:#145a32; border:1px solid #c3e6cb; padding:12px 14px; border-radius:10px; margin-bottom:14px; font-weight:600; max-width:100%; box-sizing:border-box; white-space:normal; overflow-wrap:anywhere; word-break:break-word; line-height:1.45;">
         <?= esc(session()->getFlashdata('success')) ?>
       </div>
     <?php endif; ?>
