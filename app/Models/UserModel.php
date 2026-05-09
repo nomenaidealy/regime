@@ -378,17 +378,30 @@ class UserModel extends Model
 
         if (!$prixRow) return ['success' => false, 'message' => 'Tarif introuvable pour ce régime.'];
 
-        $montant = (float)$prixRow['prix'];
+        $montantBrut = (float)$prixRow['prix'];
+        $montantPaye = $montantBrut;
+
+        // Vérifier si l'utilisateur est Gold et récupérer la remise
+        $remiseGold = 0;
+        if ($this->isGold($userId)) {
+            // Récupérer la remise Gold actuelle depuis la table gold
+            $goldConfig = $db->table('gold')->orderBy('date_update', 'DESC')->limit(1)->get()->getRowArray();
+            if ($goldConfig) {
+                $percent = (float)$goldConfig['percent'];
+                $remiseGold = 1;
+                $montantPaye = $montantBrut - ($montantBrut * ($percent / 100));
+            }
+        }
 
         // Calculer nouveau solde
         $soldeActuel = $this->getSoldeActuelle($userId);
 
 
-        if ($soldeActuel < $montant || $soldeActuel <= 0) {
+        if ($soldeActuel < $montantPaye || $soldeActuel <= 0) {
             return ['success' => false, 'message' => 'Solde insuffisant pour souscrire à ce régime.'];
         }
 
-        $nouveauSolde = $soldeActuel - $montant;
+        $nouveauSolde = $soldeActuel - $montantPaye;
 
         $db->transStart();
         try {
@@ -397,8 +410,8 @@ class UserModel extends Model
                 'id_user' => $userId,
                 'id_diet_prix' => $prixRow['id'],
                 'date_debut' => date('Y-m-d'),
-                'prix_paye' => $montant,
-                'remise_gold' => 0, // TODO : prendre en compte gold
+                'prix_paye' => $montantPaye,
+                'remise_gold' => $remiseGold,
             ];
             if ($dureeSelectionnee !== null) {
                 $insertData['nombre_jour'] = $dureeSelectionnee;
@@ -408,7 +421,7 @@ class UserModel extends Model
 
             // Ajouter mouvement (DEBIT)
             $desc = 'Souscription Régime ' . ($db->table('diet')->where('id', $dietId)->get()->getRow()->nom ?? '');
-            $mouvementModel->addDebit($userId, $montant, $nouveauSolde, $desc);
+            $mouvementModel->addDebit($userId, $montantPaye, $nouveauSolde, $desc);
 
             $db->transComplete();
             if ($db->transStatus() === false) {
