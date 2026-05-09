@@ -15,7 +15,7 @@
       <p>Informations complètes sur la suggestion sélectionnée.</p>
     </div>
     <div class="regime-left-bottom">
-      <a href="<?= base_url('mes-regimes') ?>"><i class="bi bi-arrow-left"></i> Retour aux régimes</a>
+      <a href="<?= base_url('user/mes-regimes') ?>"><i class="bi bi-arrow-left"></i> Retour aux régimes</a>
     </div>
   </div>
 
@@ -70,7 +70,7 @@
     <div style="background:#fff; padding:18px; border-radius:12px; margin-top:18px;">
       <h3 style="margin-top:0;">Acheter ce régime</h3>
       <?php if (!empty($possible) && $possible): ?>
-        <form method="post" action="<?= base_url('mes-regimes/souscrire/' . $regime['diet_id']) ?>" style="display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-top:10px;">
+        <form method="post" action="<?= base_url('user/mes-regimes/souscrire/' . $regime['diet_id']) ?>" style="display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-top:10px;">
           <?= csrf_field() ?>
           <?php if (!empty($prixs)): ?>
             <input type="hidden" name="prix_id" value="<?= esc($prixs[0]['id']) ?>">

@@ -251,7 +251,7 @@ class UserController extends Controller
             'solde'      => $solde,
         ]);
 
-        return redirect()->to('/mes-regimes')->with('success', 'Bon retour, ' . $user['nom'] . ' !');
+        return redirect()->to('/user/mes-regimes')->with('success', 'Bon retour, ' . $user['nom'] . ' !');
     }
 
     /**
@@ -259,7 +259,7 @@ class UserController extends Controller
      */
     public function dashboard()
     {
-        return redirect()->to('/mes-regimes');
+        return redirect()->to('/user/mes-regimes');
     }
 
     /**
@@ -288,7 +288,7 @@ class UserController extends Controller
         if (!$userId) return redirect()->to('login')->with('error', 'Connectez-vous pour voir les détails.');
 
         if (!$id || !is_numeric($id)) {
-            return redirect()->to('/mes-regimes')->with('error', 'Régime introuvable.');
+            return redirect()->to('/user/mes-regimes')->with('error', 'Régime introuvable.');
         }
 
         // récupérer info utilisateur / objectif
@@ -302,7 +302,7 @@ class UserController extends Controller
         $regimeModel = new \App\Models\RegimeModel();
         $details = $regimeModel->getRegimeDetailsForUser((int)$id, (float)$user['poids'], (float)$user['taille'], $objectif);
 
-        if (empty($details)) return redirect()->to('/mes-regimes')->with('error', 'Régime introuvable.');
+        if (empty($details)) return redirect()->to('/user/mes-regimes')->with('error', 'Régime introuvable.');
 
         return view('template/regimeDetails', [
             'regime' => $details['regime'],
@@ -321,7 +321,7 @@ class UserController extends Controller
         if (!$userId) return redirect()->to('login')->with('error', 'Connectez-vous pour souscrire.');
 
         if (!$dietId || !is_numeric($dietId)) {
-            return redirect()->to('mes-regimes')->with('error', 'Régime invalide.');
+            return redirect()->to('user/mes-regimes')->with('error', 'Régime invalide.');
         }
 
         $prixId = $this->request->getPost('prix_id') ? (int)$this->request->getPost('prix_id') : null;
@@ -331,9 +331,9 @@ class UserController extends Controller
         $result = $userModel->subscribeToRegime((int)$userId, (int)$dietId, $prixId, $nombreJours);
 
         if ($result['success']) {
-            return redirect()->to('mes-regimes')->with('success', $result['message']);
+            return redirect()->to('user/mes-regimes')->with('success', $result['message']);
         }
-        return redirect()->to('mes-regimes')->with('error', $result['message']);
+        return redirect()->to('user/mes-regimes')->with('error', $result['message']);
     }
 
     // ─────────────────────────────────────────

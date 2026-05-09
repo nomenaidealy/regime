@@ -100,7 +100,7 @@
                 </div>
 
                 <div style="display:flex; gap:8px; align-items:center;">
-                  <a href="<?= base_url('mes-regimes/' . $s['diet_id']) ?>" style="display:inline-flex; align-items:center; gap:8px; background:#1a73e8; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
+                  <a href="<?= base_url('user/mes-regimes/' . $s['diet_id']) ?>" style="display:inline-flex; align-items:center; gap:8px; background:#1a73e8; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
                     <i class="bi bi-eye"></i> Détails
                   </a>
 
