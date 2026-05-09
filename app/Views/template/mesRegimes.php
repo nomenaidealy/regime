@@ -26,6 +26,18 @@
       <p>Consultez les suggestions adaptées à votre profil et la liste de vos abonnements.</p>
     </div>
 
+    <?php if (session()->getFlashdata('error')): ?>
+      <div style="background:#fdecea; color:#a94442; border:1px solid #f5c6cb; padding:12px 14px; border-radius:10px; margin-bottom:14px; font-weight:600;">
+        <?= esc(session()->getFlashdata('error')) ?>
+      </div>
+    <?php endif; ?>
+
+    <?php if (session()->getFlashdata('success')): ?>
+      <div style="background:#e9f7ef; color:#145a32; border:1px solid #c3e6cb; padding:12px 14px; border-radius:10px; margin-bottom:14px; font-weight:600;">
+        <?= esc(session()->getFlashdata('success')) ?>
+      </div>
+    <?php endif; ?>
+
     <div style="display:flex; gap:20px; margin-bottom:18px; flex-wrap:wrap;">
       <div style="flex:1 1 300px; background:#fff; padding:18px; border-radius:12px;">
         <h3>Profil rapide</h3>
@@ -87,10 +99,20 @@
                   <?php endif; ?>
                 </div>
 
-                <div>
+                <div style="display:flex; gap:8px; align-items:center;">
                   <a href="<?= base_url('mes-regimes/' . $s['diet_id']) ?>" style="display:inline-flex; align-items:center; gap:8px; background:#1a73e8; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
                     <i class="bi bi-eye"></i> Détails
                   </a>
+
+                  <?php if ($s['possible']): ?>
+                    <form method="post" action="<?= base_url('mes-regimes/souscrire/' . $s['diet_id']) ?>" style="display:inline-block; margin:0;">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="prix_id" value="<?= esc($s['prix_id'] ?? '') ?>">
+                      <button type="submit" style="display:inline-flex; align-items:center; gap:8px; background:#28a745; color:#fff; padding:8px 12px; border-radius:8px; border:0; font-weight:600; font-size:13px; cursor:pointer;">
+                        <i class="bi bi-cart-plus"></i> Faire ce régime
+                      </button>
+                    </form>
+                  <?php endif; ?>
                 </div>
               </div>
             </div>

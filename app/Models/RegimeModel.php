@@ -145,4 +145,27 @@ class RegimeModel extends Model
         ];
     }
 
+    /**
+     * Récupère le prix d'un régime pour une durée donnée (ex: 30 jours)
+     * @param int $dietId
+     * @param int $duree
+     * @return array|null
+     */
+    public function getPriceForDuration(int $dietId, int $duree = 30)
+    {
+        $db = \Config\Database::connect();
+        $row = $db->table('diet_prix')->where('id_diet', $dietId)->where('duree', $duree)->get()->getRowArray();
+        return $row ?: null;
+    }
+
+    /**
+     * Récupère un prix par son id
+     */
+    public function getPriceById(int $prixId)
+    {
+        $db = \Config\Database::connect();
+        $row = $db->table('diet_prix')->where('id', $prixId)->get()->getRowArray();
+        return $row ?: null;
+    }
+
 }

@@ -312,6 +312,29 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Endpoint POST : souscrire à un régime (faire ce régime)
+     */
+    public function souscrire($dietId)
+    {
+        $userId = session()->get('user_id');
+        if (!$userId) return redirect()->to('login')->with('error', 'Connectez-vous pour souscrire.');
+
+        if (!$dietId || !is_numeric($dietId)) {
+            return redirect()->to('mes-regimes')->with('error', 'Régime invalide.');
+        }
+
+        $prixId = $this->request->getPost('prix_id') ? (int)$this->request->getPost('prix_id') : null;
+
+        $userModel = new UserModel();
+        $result = $userModel->subscribeToRegime((int)$userId, (int)$dietId, $prixId);
+
+        if ($result['success']) {
+            return redirect()->to('mes-regimes')->with('success', $result['message']);
+        }
+        return redirect()->to('mes-regimes')->with('error', $result['message']);
+    }
+
     // ─────────────────────────────────────────
     // LOGOUT
     // ─────────────────────────────────────────

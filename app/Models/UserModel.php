@@ -312,4 +312,71 @@ class UserModel extends Model
             'regimeActuel' => $regimeActuel,
         ];
     }
+
+    /**
+     * Souscrire un utilisateur à un régime :
+     * - crée un mouvement DEBIT
+     * - insère la ligne dans user_diet
+     * Ne gère pas encore la remise Gold (TODO)
+     * @param int $userId
+     * @param int $dietId
+     * @param int|null $prixId
+     * @param int $dureeDefault
+     * @return array ['success'=>bool,'message'=>string]
+     */
+    public function subscribeToRegime(int $userId, int $dietId, ?int $prixId = null, int $dureeDefault = 30): array
+    {
+        $db = \Config\Database::connect();
+        $regimeModel = new \App\Models\RegimeModel();
+        $mouvementModel = new \App\Models\MouvementModel();
+
+        // Récupérer le prix
+        $prixRow = null;
+        if ($prixId) {
+            $prixRow = $regimeModel->getPriceById($prixId);
+        }
+        if (!$prixRow) {
+            $prixRow = $regimeModel->getPriceForDuration($dietId, $dureeDefault);
+        }
+
+        if (!$prixRow) return ['success' => false, 'message' => 'Tarif introuvable pour ce régime.'];
+
+        $montant = (float)$prixRow['prix'];
+
+        // Calculer nouveau solde
+        $soldeActuel = $this->getSoldeActuelle($userId);
+
+
+        if ($soldeActuel < $montant || $soldeActuel <= 0) {
+            return ['success' => false, 'message' => 'Solde insuffisant pour souscrire à ce régime.'];
+        }
+
+        $nouveauSolde = $soldeActuel - $montant;
+
+        $db->transStart();
+        try {
+            // Insérer abonnement
+            $insert = $db->table('user_diet')->insert([
+                'id_user' => $userId,
+                'id_diet_prix' => $prixRow['id'],
+                'date_debut' => date('Y-m-d'),
+                'prix_paye' => $montant,
+                'remise_gold' => 0, // TODO : prendre en compte gold
+            ]);
+
+            // Ajouter mouvement (DEBIT)
+            $desc = 'Souscription Régime ' . ($db->table('diet')->where('id', $dietId)->get()->getRow()->nom ?? '');
+            $mouvementModel->addDebit($userId, $montant, $nouveauSolde, $desc);
+
+            $db->transComplete();
+            if ($db->transStatus() === false) {
+                return ['success' => false, 'message' => 'Erreur lors de la transaction.'];
+            }
+
+            return ['success' => true, 'message' => 'Abonnement créé.'];
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return ['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()];
+        }
+    }
 }
