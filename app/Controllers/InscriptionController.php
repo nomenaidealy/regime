@@ -27,7 +27,7 @@ class InscriptionController extends Controller
         $result = $userModel->validateStep1($data);
         if ($result['valid']) {
             session()->set('inscription_step1', $data);
-            return $this->response->setJSON(['success' => true]);
+            return $this->response->setJSON(['success' => true, 'errors' => []]);
         }
         return $this->response->setJSON(['success' => false, 'errors' => $result['errors']]);
     }
@@ -47,7 +47,7 @@ class InscriptionController extends Controller
         $result = $userModel->validateStep2($data);
         if ($result['valid']) {
             session()->set('inscription_step2', $data);
-            return $this->response->setJSON(['success' => true]);
+            return $this->response->setJSON(['success' => true, 'errors' => []]);
         }
         return $this->response->setJSON(['success' => false, 'errors' => $result['errors']]);
     }
@@ -60,18 +60,19 @@ class InscriptionController extends Controller
         }
         $data = [
             'mdp' => $this->request->getPost('mdp'),
+            'mdp_confirm' => $this->request->getPost('mdp_confirm'),
         ];
         $userModel = new UserModel();
         $result = $userModel->validateStep3($data);
         if ($result['valid']) {
             session()->set('inscription_step3', $data);
-            return $this->response->setJSON(['success' => true]);
+            return $this->response->setJSON(['success' => true, 'errors' => []]);
         }
         return $this->response->setJSON(['success' => false, 'errors' => $result['errors']]);
     }
 
     // Finalisation de l'inscription
-    public function complete()
+    public function completeInsc()
     {
         if (!$this->request->isAJAX()) {
             return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
@@ -81,14 +82,7 @@ class InscriptionController extends Controller
         $step3 = session()->get('inscription_step3') ?? [];
         $data = array_merge($step1, $step2, $step3);
         $userModel = new UserModel();
-        $userId = $userModel->insert([
-            'nom'    => $data['nom'] ?? '',
-            'email'  => $data['email'] ?? '',
-            'genre'  => $data['genre'] ?? '',
-            'taille' => $data['taille'] ?? '',
-            'poids'  => $data['poids'] ?? '',
-            'mdp'    => isset($data['mdp']) ? password_hash($data['mdp'], PASSWORD_DEFAULT) : '',
-        ], true);
+        $userId = $userModel->createUser($data);
         if (!$userId) {
             $errors = $userModel->errors();
             $msg = 'Erreur lors de la création';

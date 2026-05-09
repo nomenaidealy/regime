@@ -213,7 +213,7 @@
 
     
 
-  <button type="button" class="btn-next" onclick="submit()"><i class="bi bi-balloon-heart"></i> Créer mon compte</button>
+  <button type="button" class="btn-next" onclick="submitForm()"><i class="bi bi-balloon-heart"></i> Créer mon compte</button>
   <button type="button" class="btn-back" onclick="goTo(2)"><i class="bi bi-arrow-left"></i> Retour</button>
   </div>
 
@@ -399,7 +399,7 @@ function updateLeftSteps() {
 /**
  * Soumet le formulaire complet avec AJAX
  */
-async function submit() {
+async function submitForm() {
   // Validation finale étape 3
   if (!await validateAndProceed(3)) return;
 
@@ -506,7 +506,15 @@ document.querySelectorAll('input[name="objectif"]').forEach(radio => {
       msgImcIdeal.style.display = 'block';
     }
   });
+  
 });
+
+// Empêche le submit classique du formulaire
+document.getElementById('inscriptionForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  return false;
+});
+
 </script>
 
 

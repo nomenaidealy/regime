@@ -1,8 +1,4 @@
-$routes->get('inscription',   'InscriptionController::index');
-$routes->post('api/validate-step1', 'InscriptionController::validateStep1');
-$routes->post('api/validate-step2', 'InscriptionController::validateStep2');
-$routes->post('api/validate-step3', 'InscriptionController::validateStep3');
-$routes->post('api/inscription-complete', 'InscriptionController::complete');
+
 <?php
 use CodeIgniter\Router\RouteCollection;
 /** @var RouteCollection $routes */
@@ -12,10 +8,10 @@ $routes->get('login',           'UserController::loginPage');
 $routes->post('login',          'UserController::login');
 $routes->get('inscription',     'UserController::inscription');
 $routes->post('inscription',    'UserController::saveUser');
-$routes->post('api/validate-step1', 'UserController::validateStep1');
-$routes->post('api/validate-step2', 'UserController::validateStep2');
-$routes->post('api/validate-step3', 'UserController::validateStep3');
-$routes->post('api/complete-inscription', 'UserController::completeInscription');
+$routes->post('api/validate-step1', 'InscriptionController::validateStep1');
+$routes->post('api/validate-step2', 'InscriptionController::validateStep2');
+$routes->post('api/validate-step3', 'InscriptionController::validateStep3');
+$routes->post('api/complete-inscription', 'InscriptionController::completeInscription');
 $routes->get('logout',          'UserController::logout');
 
 // Admin login
