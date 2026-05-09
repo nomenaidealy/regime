@@ -149,14 +149,12 @@
       <div class="gc-sub">Paiement unique — valable à vie</div>
 
       <div class="gc-price">
-        <small>Ar </small><?= $prixGold ?>
-      </div>
-
-      <div class="gc-note">
-        15% de remise permanente sur tous vos régimes
-      </div>
-  
-      <a href="<?= base_url('gold/activate') ?>" class="btn-gold">
+        <small>Ar </small><?= number_format($gold['prix'], 2, '.', ' ') ?>
+    </div>
+    <div class="gc-note">
+        <?= ($gold['percent'] * 100) ?>% de remise permanente sur tous vos régimes
+    </div>
+      <a href="<?= base_url('user/gold/activate') ?>" class="btn-gold">
         Activer l'option Gold
       </a>
     </div>

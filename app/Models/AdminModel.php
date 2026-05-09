@@ -34,4 +34,6 @@ class AdminModel extends Model
             'admin'   => $admin,
         ];
     }
+
+    
 }

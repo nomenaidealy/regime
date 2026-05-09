@@ -47,10 +47,11 @@ class UserGoldModel extends Model
      * @param int $idUser L'ID de l'utilisateur
      * @return int|string L'ID de l'enregistrement créé ou false en cas d'erreur
      */
-    public function grantUserToGold($idUser)
+    public function grantUserToGold($idUser, $idGold)
     {
         $data = [
             'id_user'         => $idUser,
+            'idGold'        => $idGold,
             'date_achat_gold' => date('Y-m-d H:i:s')
         ];
 

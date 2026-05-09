@@ -18,7 +18,7 @@ $routes->get('admin',           'AdminController::index');
 $routes->post('admin/tolog',    'AdminController::tolog');
 
 // Gold option
-$routes->get('gold/activate',   'UserGoldController::activate');
+
 
 // Code Promo
 $routes->get('codepromo/form',          'CodePromoController::form');
@@ -29,6 +29,12 @@ $routes->get('codepromo/mesDemandes',    'CodePromoController::mesDemandes');
 $routes->get('dashboard', 'UserController::dashboard');
 $routes->get('profil',    'UserController::profil');
 
+$routes->group('user', ['filter' => 'user'], static function ($routes) {
+	$routes->get('dashboard', 'UserController::dashboard');
+	$routes->get('profil',    'UserController::profil');
+	$routes->get('gold/activate',   'DemandeGoldController::activate');
+
+});
 // Admin area protected by filter
 $routes->group('admin', ['filter' => 'admin'], static function ($routes) {
 	$routes->get('dashboard', 'AdminController::dashboard');
@@ -39,8 +45,12 @@ $routes->group('admin', ['filter' => 'admin'], static function ($routes) {
 	$routes->get('codepromo/list',    'CodePromoController::adminList');
 	$routes->post('codepromo/valider', 'CodePromoController::adminValider');
 	$routes->post('codepromo/rejeter',  'CodePromoController::adminRejeter');
-	$routes->get('codepromo/notifications', 'CodePromoController::adminNotifications');
+	$routes->get('notifications',          'NotificationController::index');
 
+	// gold
+	 $routes->get('gold/demandes',          'DemandeGoldController::adminDemandes');
+    $routes->post('gold/valider',          'DemandeGoldController::adminValider');
+    $routes->post('gold/rejeter',          'DemandeGoldController::adminRejeter');
 	// Edit regime
 	$routes->get('regimes/create',        'RegimeController::form');
 	$routes->get('regimes/edit/(:num)',   'RegimeController::edit/$1');

@@ -8,16 +8,19 @@ use App\Models\GoldModel;
 class Home extends Controller
 {
     
-    public function index()
-    {
-        $goldModel = new GoldModel();
+   public function index()
+{
+    $goldModel = new GoldModel();
+    $gold = $goldModel->getGoldPrixRecent();
 
-        $data['prixGold'] = $goldModel->getGoldPrixRecent();
-
-    
-        $prixGold = $data['prixGold'];
-        return view('template/accueil', ['prixGold' => $prixGold]);
-
+    // Valeur par défaut si la table est vide
+    if (!$gold) {
+        $gold = [
+            'prix'    => 0.00,
+            'percent' => 0.00,
+        ];
     }
 
+    return view('template/accueil', ['gold' => $gold]);
+}
 }

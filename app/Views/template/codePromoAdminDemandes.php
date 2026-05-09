@@ -198,6 +198,7 @@ async function valider(id, btn) {
   btn.disabled  = true;
   btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
 
+  // ✅ DEBUG : afficher la réponse brute avant json()
   const res  = await fetch('<?= base_url('admin/codepromo/valider') ?>', {
     method : 'POST',
     headers: {
@@ -206,13 +207,24 @@ async function valider(id, btn) {
     },
     body: 'demande_id=' + id
   });
-  const data = await res.json();
 
-  if (data.success) {
-    // Recharger la page pour rafraîchir le tableau
-    window.location.reload();
-  } else {
-    alert('Erreur : ' + data.message);
+  // ✅ Lire comme texte d'abord pour voir ce que le serveur renvoie vraiment
+  const raw = await res.text();
+  console.log('Réponse brute du serveur :', raw);
+  console.log('Status HTTP :', res.status);
+
+  try {
+    const data = JSON.parse(raw);
+    if (data.success) {
+      window.location.reload();
+    } else {
+      alert('Erreur : ' + data.message);
+      btn.disabled  = false;
+      btn.innerHTML = '<i class="bi bi-check-lg"></i> Valider';
+    }
+  } catch {
+    // ✅ Si ce n'est pas du JSON → afficher le HTML d'erreur
+    alert('Le serveur a retourné une erreur HTML. Voir console.');
     btn.disabled  = false;
     btn.innerHTML = '<i class="bi bi-check-lg"></i> Valider';
   }

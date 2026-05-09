@@ -69,6 +69,7 @@ CREATE TABLE users (
 CREATE TABLE gold (
     id INT PRIMARY KEY AUTO_INCREMENT,
     prix DECIMAL(10,2) NOT NULL,
+    percent DECIMAL(3,2) NOT NULL,
     date_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -141,20 +142,33 @@ CREATE TABLE demande_code_promo (
     UNIQUE (id_user, id_code_promo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+CREATE TABLE demande_gold (
+    id              INT PRIMARY KEY AUTO_INCREMENT,
+    id_user         INT NOT NULL,
+    statut          ENUM('EN_ATTENTE','VALIDE','REJETE') NOT NULL DEFAULT 'EN_ATTENTE',
+    date_demande    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_traitement DATETIME DEFAULT NULL,
+    id_admin        INT DEFAULT NULL,
+    motif_rejet     VARCHAR(255) DEFAULT NULL,
+    FOREIGN KEY (id_user)  REFERENCES users(id)  ON DELETE CASCADE,
+    FOREIGN KEY (id_admin) REFERENCES admin(id)  ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 13. NOTIFICATION ADMIN (nouvelle)
 CREATE TABLE notification_admin (
     id            INT PRIMARY KEY AUTO_INCREMENT,
     id_admin      INT DEFAULT NULL,
-    type          ENUM('CODE_PROMO') NOT NULL DEFAULT 'CODE_PROMO',
-    id_demande    INT NOT NULL,
+    type          ENUM('CODE_PROMO','DEMANDE_GOLD') NOT NULL,
+    id_demande    INT NOT NULL,   -- ID dans la table correspondante au type
     message       VARCHAR(255) NOT NULL,
     lue           TINYINT(1) NOT NULL DEFAULT 0,
     date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     date_lecture  DATETIME DEFAULT NULL,
-    FOREIGN KEY (id_admin)   REFERENCES admin(id)              ON DELETE SET NULL,
-    FOREIGN KEY (id_demande) REFERENCES demande_code_promo(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+    FOREIGN KEY (id_admin) REFERENCES admin(id) ON DELETE SET NULL
+    -- Pas de FK sur demande_id → géré applicativement selon `type`
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
 --  DONNÉES

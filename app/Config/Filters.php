@@ -13,6 +13,7 @@ use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 use App\Filters\AdminFilter;
+Use App\Filters\UserFilter;
 
 class Filters extends BaseFilters
 {
@@ -36,6 +37,7 @@ class Filters extends BaseFilters
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'admin'         => AdminFilter::class,
+        'user'          =>UserFilter::class,
     ];
 
     /**

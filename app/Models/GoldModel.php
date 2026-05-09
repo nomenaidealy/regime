@@ -19,6 +19,6 @@ class GoldModel extends Model
         ->orderBy('date_update', 'DESC')
         ->first();
 
-    return $gold['prix'];
+    return $gold;
 }
 }

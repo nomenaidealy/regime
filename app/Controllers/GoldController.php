@@ -11,7 +11,7 @@ class GoldController extends BaseController
     {
         $goldModel = new GoldModel();
 
-        $data['prixGold'] = $goldModel->getGoldPrixRecent();
+        $data = $goldModel->getGoldPrixRecent();
 
         return view('accueil', $data);
     }

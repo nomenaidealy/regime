@@ -86,7 +86,8 @@ class CodePromoController extends Controller
         // 4. Créer la notification admin
         $this->notifModel->creerNotification(
             $demandeId,
-            "{$userName} a soumis le code {$code} ({$codeData['montant']})"
+            "{$userName} a soumis le code {$code} ({$codeData['montant']})",
+            'CODE_PROMO'              // type explicite
         );
 
         return $this->response->setJSON([
@@ -250,7 +251,7 @@ class CodePromoController extends Controller
         $this->demandeModel->marquerValide($demandeId, $adminId);
 
         // 4. Marquer la notification comme lue
-        $this->notifModel->marquerLue($demandeId);
+        $this->notifModel->marquerLue($demandeId, 'CODE_PROMO');
 
         return $this->response->setJSON([
             'success' => true,
@@ -294,7 +295,7 @@ class CodePromoController extends Controller
 
         // Marquer rejetée + notif lue
         $this->demandeModel->marquerRejete($demandeId, $adminId, $motif);
-        $this->notifModel->marquerLue($demandeId);
+        $this->notifModel->marquerLue($demandeId, 'CODE_PROMO');
 
         return $this->response->setJSON([
             'success' => true,
@@ -306,19 +307,5 @@ class CodePromoController extends Controller
     // ADMIN — Notifications non lues (AJAX)
     // ────────────────────────────────────────
 
-    public function adminNotifications()
-    {
-        if (!$this->session->get('is_admin')) {
-            return $this->response->setStatusCode(403)->setJSON([
-                'success' => false,
-                'message' => 'Accès non autorisé',
-            ]);
-        }
 
-        return $this->response->setJSON([
-            'success' => true,
-            'count'   => $this->notifModel->countNonLues(),
-            'data'    => $this->notifModel->getNonLues(),
-        ]);
-    }
 }
