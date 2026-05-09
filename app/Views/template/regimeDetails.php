@@ -67,6 +67,27 @@
       <?php endif; ?>
     </div>
 
+    <div style="background:#fff; padding:18px; border-radius:12px; margin-top:18px;">
+      <h3 style="margin-top:0;">Acheter ce régime</h3>
+      <?php if (!empty($possible) && $possible): ?>
+        <form method="post" action="<?= base_url('mes-regimes/souscrire/' . $regime['diet_id']) ?>" style="display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-top:10px;">
+          <?= csrf_field() ?>
+          <?php if (!empty($prixs)): ?>
+            <input type="hidden" name="prix_id" value="<?= esc($prixs[0]['id']) ?>">
+          <?php endif; ?>
+          <label style="display:flex; flex-direction:column; gap:6px; min-width:180px;">
+            <span style="font-weight:600;">Nombre de jours</span>
+            <input type="number" name="nombre_jour" min="1" step="1" value="<?= esc($jours_estimes ?? 30) ?>" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px;">
+          </label>
+          <button type="submit" style="display:inline-flex; align-items:center; gap:8px; background:#28a745; color:#fff; padding:10px 14px; border-radius:8px; border:0; font-weight:600; font-size:14px; cursor:pointer;">
+            <i class="bi bi-cart-plus"></i> Faire ce régime
+          </button>
+        </form>
+      <?php else: ?>
+        <div style="margin-top:10px; color:#a94442; font-weight:600;">Ce régime n’est pas recommandé pour votre objectif.</div>
+      <?php endif; ?>
+    </div>
+
   </div>
 
 </div>

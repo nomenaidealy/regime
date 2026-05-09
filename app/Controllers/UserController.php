@@ -325,9 +325,10 @@ class UserController extends Controller
         }
 
         $prixId = $this->request->getPost('prix_id') ? (int)$this->request->getPost('prix_id') : null;
+        $nombreJours = $this->request->getPost('nombre_jour') ? (int)$this->request->getPost('nombre_jour') : null;
 
         $userModel = new UserModel();
-        $result = $userModel->subscribeToRegime((int)$userId, (int)$dietId, $prixId);
+        $result = $userModel->subscribeToRegime((int)$userId, (int)$dietId, $prixId, $nombreJours);
 
         if ($result['success']) {
             return redirect()->to('mes-regimes')->with('success', $result['message']);

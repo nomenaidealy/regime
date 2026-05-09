@@ -324,7 +324,7 @@ class UserModel extends Model
      * @param int $dureeDefault
      * @return array ['success'=>bool,'message'=>string]
      */
-    public function subscribeToRegime(int $userId, int $dietId, ?int $prixId = null, int $dureeDefault = 30): array
+    public function subscribeToRegime(int $userId, int $dietId, ?int $prixId = null, ?int $nombreJours = null, int $dureeDefault = 30): array
     {
         $db = \Config\Database::connect();
         $regimeModel = new \App\Models\RegimeModel();
@@ -332,11 +332,48 @@ class UserModel extends Model
 
         // Récupérer le prix
         $prixRow = null;
-        if ($prixId) {
+        $dureeSelectionnee = null;
+
+        // Priorité : nombre de jours choisi par l'utilisateur
+        if ($nombreJours && $nombreJours > 0) {
+            // 1) durée exacte
+            $prixRow = $db->table('diet_prix')
+                ->where('id_diet', $dietId)
+                ->where('duree', $nombreJours)
+                ->get()->getRowArray();
+
+            // 2) sinon, prendre le premier palier supérieur
+            if (!$prixRow) {
+                $prixRow = $db->table('diet_prix')
+                    ->where('id_diet', $dietId)
+                    ->where('duree >=', $nombreJours)
+                    ->orderBy('duree', 'ASC')
+                    ->limit(1)
+                    ->get()->getRowArray();
+            }
+
+            // 3) sinon, prendre la durée maximale disponible pour ce régime
+            if (!$prixRow) {
+                $prixRow = $db->table('diet_prix')
+                    ->where('id_diet', $dietId)
+                    ->orderBy('duree', 'DESC')
+                    ->limit(1)
+                    ->get()->getRowArray();
+            }
+
+            if ($prixRow) {
+                $dureeSelectionnee = (int)$prixRow['duree'];
+            }
+        } elseif ($prixId) {
             $prixRow = $regimeModel->getPriceById($prixId);
-        }
-        if (!$prixRow) {
+            if ($prixRow) {
+                $dureeSelectionnee = (int)$prixRow['duree'];
+            }
+        } else {
             $prixRow = $regimeModel->getPriceForDuration($dietId, $dureeDefault);
+            if ($prixRow) {
+                $dureeSelectionnee = (int)$prixRow['duree'];
+            }
         }
 
         if (!$prixRow) return ['success' => false, 'message' => 'Tarif introuvable pour ce régime.'];
@@ -355,14 +392,19 @@ class UserModel extends Model
 
         $db->transStart();
         try {
-            // Insérer abonnement
-            $insert = $db->table('user_diet')->insert([
+            // Insérer abonnement (conserver nombre_jour pour faciliter le calcul côté application)
+            $insertData = [
                 'id_user' => $userId,
                 'id_diet_prix' => $prixRow['id'],
                 'date_debut' => date('Y-m-d'),
                 'prix_paye' => $montant,
                 'remise_gold' => 0, // TODO : prendre en compte gold
-            ]);
+            ];
+            if ($dureeSelectionnee !== null) {
+                $insertData['nombre_jour'] = $dureeSelectionnee;
+            }
+
+            $insert = $db->table('user_diet')->insert($insertData);
 
             // Ajouter mouvement (DEBIT)
             $desc = 'Souscription Régime ' . ($db->table('diet')->where('id', $dietId)->get()->getRow()->nom ?? '');

@@ -104,15 +104,6 @@
                     <i class="bi bi-eye"></i> Détails
                   </a>
 
-                  <?php if ($s['possible']): ?>
-                    <form method="post" action="<?= base_url('mes-regimes/souscrire/' . $s['diet_id']) ?>" style="display:inline-block; margin:0;">
-                      <?= csrf_field() ?>
-                      <input type="hidden" name="prix_id" value="<?= esc($s['prix_id'] ?? '') ?>">
-                      <button type="submit" style="display:inline-flex; align-items:center; gap:8px; background:#28a745; color:#fff; padding:8px 12px; border-radius:8px; border:0; font-weight:600; font-size:13px; cursor:pointer;">
-                        <i class="bi bi-cart-plus"></i> Faire ce régime
-                      </button>
-                    </form>
-                  <?php endif; ?>
                 </div>
               </div>
             </div>
