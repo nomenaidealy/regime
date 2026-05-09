@@ -237,22 +237,10 @@ class UserController extends Controller
 
         session()->remove(['is_admin', 'admin_id', 'admin_login']);
 
-        $db = \Config\Database::connect();
+        // Déléguer vérifs au modèle
+        $isGold = $userModel->isGold((int)$user['id']);
+        $solde = $userModel->getSoldeActuelle((int)$user['id']);
 
-        // Vérifier si Gold
-        $isGold = $db->table('user_gold_at_time')
-            ->where('id_user', $user['id'])
-            ->countAllResults() > 0;
-
-        // Calculer solde
-        $dernierMouvement = $db->table('mouvement')
-            ->where('id_user', $user['id'])
-            ->orderBy('date_mouvement', 'DESC')
-            ->limit(1)
-            ->get()->getRow();
-        $solde = $dernierMouvement ? (float)$dernierMouvement->montant_apres : 0.00;
-
-        // Créer session
         session()->set([
             'isLoggedIn' => true,
             'user_id'    => $user['id'],
@@ -283,109 +271,12 @@ class UserController extends Controller
         if (!$userId) {
             return redirect()->to('login')->with('error', 'Connectez-vous pour voir vos régimes.');
         }
-
+        // déléguer la logique métier au modèle
         $userModel = new UserModel();
-        $db = \Config\Database::connect();
+        $data = $userModel->getMesRegimesData($userId);
+        if (empty($data)) return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
 
-        $user = $userModel->find($userId);
-        if (!$user) {
-            return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
-        }
-
-        $imc = round($user['poids'] / ($user['taille'] * $user['taille']), 1);
-
-        $objectif = $db->table('user_objectif uo')
-            ->join('objectif o', 'o.id = uo.id_objectif')
-            ->where('uo.id_user', $userId)
-            ->orderBy('uo.date_choix', 'DESC')
-            ->limit(1)
-            ->get()->getRow();
-
-        // Solde
-        $solde = $userModel->getSoldeActuelle($userId);
-
-        $isGold = $db->table('user_gold_at_time')
-            ->where('id_user', $userId)
-            ->countAllResults() > 0;
-
-        // Suggestions de régimes
-        $suggestions = $db->table('diet d')
-            ->select('d.id AS diet_id, d.nom AS diet_nom, d.description AS diet_description, d.variation_poids_jour, d.viande_percent, d.volaille_percent, d.poisson_percent, s.libelle AS sport_libelle, s.variation_poids_seance, dp.prix AS prix_30, dp.id AS prix_id')
-            ->join('sport s', 's.id = d.id_sport', 'left')
-            ->join('diet_prix dp', 'dp.id_diet = d.id AND dp.duree = 30', 'left')
-            ->orderBy('d.nom', 'ASC')
-            ->get()->getResultArray();
-
-        // Calcul de la durée personnalisée pour chaque suggestion selon l'objectif utilisateur
-        $userWeight = (float)$user['poids'];
-        $userHeight = (float)$user['taille'];
-
-        // Valeur cible (poids ou IMC selon l'objectif)
-        $targetWeight = null;
-        if ($objectif && isset($objectif->valeur_objectif)) {
-            // Si l'objectif est un IMC (libelle contenant "IMC" ou id_objectif == 3), convertir en poids
-            $libelle = strtolower($objectif->libelle ?? '');
-            if (strpos($libelle, 'imc') !== false) {
-                $targetIMC = (float)$objectif->valeur_objectif;
-                $targetWeight = $targetIMC * ($userHeight * $userHeight);
-            } else {
-                $targetWeight = (float)$objectif->valeur_objectif;
-            }
-        }
-
-        foreach ($suggestions as &$s) {
-            $s['jours_estimes'] = null;
-            $s['possible'] = true;
-            if ($targetWeight === null || !isset($s['variation_poids_jour']) || $s['variation_poids_jour'] == 0) {
-                $s['possible'] = false;
-                continue;
-            }
-
-            $delta = $targetWeight - $userWeight; // >0 => besoin de prendre du poids, <0 => perdre
-            if (abs($delta) < 0.001) {
-                $s['jours_estimes'] = 0;
-                continue;
-            }
-
-            $varJour = (float)$s['variation_poids_jour'];
-
-            // Vérifier compatibilité sens : perte vs prise
-            if ($delta > 0 && $varJour <= 0) {
-                $s['possible'] = false; // régime non adapté (fait perdre au lieu de prendre)
-                continue;
-            }
-            if ($delta < 0 && $varJour >= 0) {
-                $s['possible'] = false; // régime non adapté (fait prendre au lieu de perdre)
-                continue;
-            }
-
-            $jours = (int)ceil(abs($delta) / abs($varJour));
-            $s['jours_estimes'] = $jours;
-        }
-
-        // Ne garder que les suggestions recommandées
-        $suggestions = array_values(array_filter($suggestions, function ($s) {
-            return isset($s['possible']) && $s['possible'];
-        }));
-
-        // Abonnements
-        $subscriptions = $db->table('user_diet ud')
-            ->select('ud.*, dp.duree, dp.prix, d.nom AS diet_nom')
-            ->join('diet_prix dp', 'dp.id = ud.id_diet_prix')
-            ->join('diet d', 'd.id = dp.id_diet')
-            ->where('ud.id_user', $userId)
-            ->orderBy('ud.date_debut', 'DESC')
-            ->get()->getResultArray();
-
-        return view('template/mesRegimes', [
-            'user' => $user,
-            'imc' => $imc,
-            'objectif' => $objectif,
-            'solde' => $solde,
-            'isGold' => $isGold,
-            'suggestions' => $suggestions,
-            'subscriptions' => $subscriptions,
-        ]);
+        return view('template/mesRegimes', $data);
     }
 
     /**
@@ -394,34 +285,30 @@ class UserController extends Controller
     public function regimeDetails($id)
     {
         $userId = session()->get('user_id');
-        if (!$userId) {
-            return redirect()->to('login')->with('error', 'Connectez-vous pour voir les détails.');
-        }
+        if (!$userId) return redirect()->to('login')->with('error', 'Connectez-vous pour voir les détails.');
 
         if (!$id || !is_numeric($id)) {
             return redirect()->to('/mes-regimes')->with('error', 'Régime introuvable.');
         }
 
-        $db = \Config\Database::connect();
+        // récupérer info utilisateur / objectif
+        $userModel = new UserModel();
+        $user = $userModel->find($userId);
+        if (!$user) return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
 
-        $regime = $db->table('diet d')
-            ->select('d.id AS diet_id, d.nom AS diet_nom, d.description AS diet_description, d.variation_poids_jour, d.viande_percent, d.volaille_percent, d.poisson_percent, s.libelle AS sport_libelle, s.description AS sport_description, s.variation_poids_seance')
-            ->join('sport s', 's.id = d.id_sport', 'left')
-            ->where('d.id', $id)
-            ->get()->getRowArray();
+        $objectifModel = new \App\Models\ObjectifModel();
+        $objectif = $objectifModel->getLatestForUser($userId);
 
-        if (!$regime) {
-            return redirect()->to('/mes-regimes')->with('error', 'Régime introuvable.');
-        }
+        $regimeModel = new \App\Models\RegimeModel();
+        $details = $regimeModel->getRegimeDetailsForUser((int)$id, (float)$user['poids'], (float)$user['taille'], $objectif);
 
-        $prixs = $db->table('diet_prix')
-            ->where('id_diet', $id)
-            ->orderBy('duree', 'ASC')
-            ->get()->getResultArray();
+        if (empty($details)) return redirect()->to('/mes-regimes')->with('error', 'Régime introuvable.');
 
         return view('template/regimeDetails', [
-            'regime' => $regime,
-            'prixs' => $prixs,
+            'regime' => $details['regime'],
+            'prixs' => $details['prixs'],
+            'jours_estimes' => $details['jours_estimes'],
+            'possible' => $details['possible'],
         ]);
     }
 
@@ -440,50 +327,14 @@ class UserController extends Controller
     // ─────────────────────────────────────────
     public function profil()
     {
-        $userId    = session()->get('user_id');
+        $userId = session()->get('user_id');
+        if (!$userId) return redirect()->to('login')->with('error', 'Connectez-vous pour voir votre profil.');
+
         $userModel = new UserModel();
-        $db        = \Config\Database::connect();
+        $data = $userModel->getProfilData($userId);
+        if (empty($data)) return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
 
-        $user = $userModel->find($userId);
-
-        // IMC
-        $imc = round($user['poids'] / ($user['taille'] * $user['taille']), 1);
-
-        // Objectif actuel
-        $objectif = $db->table('user_objectif uo')
-            ->join('objectif o', 'o.id = uo.id_objectif')
-            ->where('uo.id_user', $userId)
-            ->orderBy('uo.date_choix', 'DESC')
-            ->limit(1)
-            ->get()->getRow();
-
-        // Solde
-        // Solde
-        $solde = $userModel->getSoldeActuelle($userId);
-
-        // Gold ?
-        $isGold = $db->table('user_gold_at_time')
-            ->where('id_user', $userId)
-            ->countAllResults() > 0;
-
-        // Régime en cours / dernier régime souscrit
-        $regimeActuel = $db->table('user_diet ud')
-            ->select('ud.date_debut, ud.prix_paye, ud.remise_gold, dp.duree, dp.prix, d.nom AS diet_nom, d.description AS diet_description')
-            ->join('diet_prix dp', 'dp.id = ud.id_diet_prix')
-            ->join('diet d', 'd.id = dp.id_diet')
-            ->where('ud.id_user', $userId)
-            ->orderBy('ud.date_debut', 'DESC')
-            ->limit(1)
-            ->get()->getRow();
-
-        return view('profil', [
-            'user'     => $user,
-            'imc'      => $imc,
-            'objectif' => $objectif,
-            'solde'    => $solde,
-            'isGold'   => $isGold,
-            'regimeActuel' => $regimeActuel,
-        ]);
+        return view('profil', $data);
     }
 
 }

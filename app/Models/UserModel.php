@@ -225,4 +225,91 @@ class UserModel extends Model
     {
         return $this->getSolde($userId);
     }
+
+    /**
+     * Rassemble les données nécessaires pour la page "Mes régimes" pour un utilisateur
+     * @param int $userId
+     * @return array
+     */
+    public function getMesRegimesData(int $userId): array
+    {
+        $db = \Config\Database::connect();
+
+        $user = $this->find($userId);
+        if (!$user) return [];
+
+        $imc = round($user['poids'] / ($user['taille'] * $user['taille']), 1);
+
+        $objectifModel = new \App\Models\ObjectifModel();
+        $objectif = $objectifModel->getLatestForUser($userId);
+
+        $solde = $this->getSoldeActuelle($userId);
+
+        $isGold = $db->table('user_gold_at_time')->where('id_user', $userId)->countAllResults() > 0;
+
+        // Suggestions via RegimeModel
+        $regimeModel = new \App\Models\RegimeModel();
+        $suggestions = $regimeModel->getSuggestionsForUser((float)$user['poids'], (float)$user['taille'], $objectif);
+
+        // Abonnements
+        $subscriptions = $db->table('user_diet ud')
+            ->select('ud.*, dp.duree, dp.prix, d.nom AS diet_nom')
+            ->join('diet_prix dp', 'dp.id = ud.id_diet_prix')
+            ->join('diet d', 'd.id = dp.id_diet')
+            ->where('ud.id_user', $userId)
+            ->orderBy('ud.date_debut', 'DESC')
+            ->get()->getResultArray();
+
+        return [
+            'user' => $user,
+            'imc' => $imc,
+            'objectif' => $objectif,
+            'solde' => $solde,
+            'isGold' => $isGold,
+            'suggestions' => $suggestions,
+            'subscriptions' => $subscriptions,
+        ];
+    }
+
+    /**
+     * Retourne les données nécessaires pour la page Profil
+     * inclut user, imc, objectif, solde, isGold et dernier régime souscrit
+     * @param int $userId
+     * @return array
+     */
+    public function getProfilData(int $userId): array
+    {
+        $db = \Config\Database::connect();
+
+        $user = $this->find($userId);
+        if (!$user) return [];
+
+        $imc = round($user['poids'] / ($user['taille'] * $user['taille']), 1);
+
+        $objectifModel = new \App\Models\ObjectifModel();
+        $objectif = $objectifModel->getLatestForUser($userId);
+
+        $solde = $this->getSoldeActuelle($userId);
+
+        $isGold = $db->table('user_gold_at_time')->where('id_user', $userId)->countAllResults() > 0;
+
+        // dernier régime souscrit
+        $regimeActuel = $db->table('user_diet ud')
+            ->select('ud.date_debut, ud.prix_paye, ud.remise_gold, dp.duree, dp.prix, d.nom AS diet_nom, d.description AS diet_description')
+            ->join('diet_prix dp', 'dp.id = ud.id_diet_prix')
+            ->join('diet d', 'd.id = dp.id_diet')
+            ->where('ud.id_user', $userId)
+            ->orderBy('ud.date_debut', 'DESC')
+            ->limit(1)
+            ->get()->getRow();
+
+        return [
+            'user' => $user,
+            'imc' => $imc,
+            'objectif' => $objectif,
+            'solde' => $solde,
+            'isGold' => $isGold,
+            'regimeActuel' => $regimeActuel,
+        ];
+    }
 }
