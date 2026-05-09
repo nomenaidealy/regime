@@ -76,10 +76,22 @@
                 <div><strong>Composition :</strong> V <?= esc($s['viande_percent']) ?>% • O <?= esc($s['volaille_percent']) ?>% • P <?= esc($s['poisson_percent']) ?>%</div>
               </div>
 
-              <div style="margin-top:14px;">
-                <a href="<?= base_url('mes-regimes/' . $s['diet_id']) ?>" style="display:inline-flex; align-items:center; gap:8px; background:#1a73e8; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
-                  <i class="bi bi-eye"></i> Détails
-                </a>
+              <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <div style="font-size:13px; color:#333;">
+                  <?php if ($s['jours_estimes'] === 0): ?>
+                    <div style="font-weight:700; color:#1a73e8;">Objectif déjà atteint</div>
+                  <?php elseif ($s['possible']): ?>
+                    <div style="font-weight:700; color:#1a73e8;">Durée estimée pour vous : <?= esc($s['jours_estimes']) ?> jours</div>
+                  <?php else: ?>
+                    <div style="font-weight:700; color:#a94442;">Non recommandé pour votre objectif</div>
+                  <?php endif; ?>
+                </div>
+
+                <div>
+                  <a href="<?= base_url('mes-regimes/' . $s['diet_id']) ?>" style="display:inline-flex; align-items:center; gap:8px; background:#1a73e8; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
+                    <i class="bi bi-eye"></i> Détails
+                  </a>
+                </div>
               </div>
             </div>
           <?php endforeach; ?>

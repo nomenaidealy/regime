@@ -316,6 +316,58 @@ class UserController extends Controller
             ->orderBy('d.nom', 'ASC')
             ->get()->getResultArray();
 
+        // Calcul de la durée personnalisée pour chaque suggestion selon l'objectif utilisateur
+        $userWeight = (float)$user['poids'];
+        $userHeight = (float)$user['taille'];
+
+        // Valeur cible (poids ou IMC selon l'objectif)
+        $targetWeight = null;
+        if ($objectif && isset($objectif->valeur_objectif)) {
+            // Si l'objectif est un IMC (libelle contenant "IMC" ou id_objectif == 3), convertir en poids
+            $libelle = strtolower($objectif->libelle ?? '');
+            if (strpos($libelle, 'imc') !== false) {
+                $targetIMC = (float)$objectif->valeur_objectif;
+                $targetWeight = $targetIMC * ($userHeight * $userHeight);
+            } else {
+                $targetWeight = (float)$objectif->valeur_objectif;
+            }
+        }
+
+        foreach ($suggestions as &$s) {
+            $s['jours_estimes'] = null;
+            $s['possible'] = true;
+            if ($targetWeight === null || !isset($s['variation_poids_jour']) || $s['variation_poids_jour'] == 0) {
+                $s['possible'] = false;
+                continue;
+            }
+
+            $delta = $targetWeight - $userWeight; // >0 => besoin de prendre du poids, <0 => perdre
+            if (abs($delta) < 0.001) {
+                $s['jours_estimes'] = 0;
+                continue;
+            }
+
+            $varJour = (float)$s['variation_poids_jour'];
+
+            // Vérifier compatibilité sens : perte vs prise
+            if ($delta > 0 && $varJour <= 0) {
+                $s['possible'] = false; // régime non adapté (fait perdre au lieu de prendre)
+                continue;
+            }
+            if ($delta < 0 && $varJour >= 0) {
+                $s['possible'] = false; // régime non adapté (fait prendre au lieu de perdre)
+                continue;
+            }
+
+            $jours = (int)ceil(abs($delta) / abs($varJour));
+            $s['jours_estimes'] = $jours;
+        }
+
+        // Ne garder que les suggestions recommandées
+        $suggestions = array_values(array_filter($suggestions, function ($s) {
+            return isset($s['possible']) && $s['possible'];
+        }));
+
         // Abonnements
         $subscriptions = $db->table('user_diet ud')
             ->select('ud.*, dp.duree, dp.prix, d.nom AS diet_nom')
