@@ -159,7 +159,7 @@ class UserModel extends Model
             'genre'  => $data['genre'],
             'taille' => $data['taille'],
             'poids'  => $data['poids'],
-            'mdp'    => password_hash($data['mdp'], PASSWORD_DEFAULT)
+            'mdp'    => $data['mdp']
         ];
 
         if ($this->insert($userData)) {

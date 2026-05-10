@@ -9,21 +9,14 @@ $routes->get('inscription',   'InscriptionController::index');
 $routes->post('api/validate-step1', 'InscriptionController::validateStep1');
 $routes->post('api/validate-step2', 'InscriptionController::validateStep2');
 $routes->post('api/validate-step3', 'InscriptionController::validateStep3');
-$routes->post('api/inscription-complete', 'InscriptionController::complete');
+$routes->post('/api/complete-inscription', 'InscriptionController::completeInsc');
 
 $routes->get('/',              'Home::index');
 $routes->get('login',           'UserController::loginPage');
 $routes->post('login',          'UserController::login');
 $routes->get('inscription',     'UserController::inscription');
 $routes->post('inscription',    'UserController::saveUser');
-$routes->post('api/validate-step1', 'InscriptionController::validateStep1');
-$routes->post('api/validate-step2', 'InscriptionController::validateStep2');
-$routes->post('api/validate-step3', 'InscriptionController::validateStep3');
-$routes->post('api/complete-inscription', 'InscriptionController::completeInscription');
-$routes->post('api/validate-step1', 'InscriptionController::validateStep1');
-$routes->post('api/validate-step2', 'InscriptionController::validateStep2');
-$routes->post('api/validate-step3', 'InscriptionController::validateStep3');
-$routes->post('api/complete-inscription', 'InscriptionController::completeInscription');
+
 $routes->get('logout',          'UserController::logout');
 
 // Admin login
