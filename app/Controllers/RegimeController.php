@@ -4,6 +4,22 @@ use App\Controllers\BaseController;
 
 class RegimeController extends BaseController
 {
+    private function normalizeDecimal($value): ?float
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        $value = str_replace(',', '.', $value);
+
+        return is_numeric($value) ? (float) $value : null;
+    }
+
     public function form()
     {
         try {
@@ -63,11 +79,15 @@ class RegimeController extends BaseController
 
        
         $description = $this->request->getPost('description');
-        $variation_poids_jour = $this->request->getPost('variation_poids_jour');
+        $variation_poids_jour = $this->normalizeDecimal($this->request->getPost('variation_poids_jour'));
         $viande = (int)$this->request->getPost('viande_percent');
         $volaille = (int)$this->request->getPost('volaille_percent');
         $poisson = (int)$this->request->getPost('poisson_percent');
         $id_sport = $this->request->getPost('id_sport') ?: null;
+
+        if ($variation_poids_jour === null) {
+            return redirect()->back()->withInput()->with('error', 'La variation de poids doit être un nombre valide (ex: 0,10).');
+        }
 
         if (($viande + $volaille + $poisson) !== 100) {
             return redirect()->back()->withInput()->with('error', 'La somme des pourcentages doit être égale à 100%.');
@@ -88,16 +108,16 @@ class RegimeController extends BaseController
         }
 
         // Valider chaque paire
-        for ($i = 0; $i < count($durees)-1; $i++) {
+        for ($i = 0; $i < count($durees); $i++) {
             $rawD = $durees[$i];
             $rawP = $prixs[$i] ?? null;
             $d = intval($rawD);
-            $p = is_numeric($rawP) ? floatval($rawP) : null;
+            $p = $this->normalizeDecimal($rawP);
 
             if ($d <= 0) {
                 return redirect()->back()->withInput()->with('error', "Durée invalide à la ligne " . ($i+1) . ": \"" . $rawD . "\". Chaque durée doit être un entier positif.");
             }
-            if ($rawP === null || !is_numeric($rawP) || $p < 0) {
+            if ($rawP === null || $p === null || $p < 0) {
                 return redirect()->back()->withInput()->with('error', "Prix invalide à la ligne " . ($i+1) . ": \"" . ($rawP ?? '') . "\". Chaque prix doit être un nombre >= 0.");
             }
         }
@@ -118,9 +138,9 @@ class RegimeController extends BaseController
             $dietId = $db->insertID();
 
          
-            for ($i = 0; $i < count($durees)-1; $i++) {
+            for ($i = 0; $i < count($durees); $i++) {
                 $d = intval($durees[$i]);
-                $p = floatval($prixs[$i]);
+                $p = $this->normalizeDecimal($prixs[$i]);
                 $db->table('diet_prix')->insert([
                     'id_diet' => $dietId,
                     'duree'   => $d,
@@ -160,11 +180,15 @@ class RegimeController extends BaseController
 
  
         $description = $this->request->getPost('description');
-        $variation_poids_jour = $this->request->getPost('variation_poids_jour');
+        $variation_poids_jour = $this->normalizeDecimal($this->request->getPost('variation_poids_jour'));
         $viande = (int)$this->request->getPost('viande_percent');
         $volaille = (int)$this->request->getPost('volaille_percent');
         $poisson = (int)$this->request->getPost('poisson_percent');
         $id_sport = $this->request->getPost('id_sport') ?: null;
+
+        if ($variation_poids_jour === null) {
+            return redirect()->back()->withInput()->with('error', 'La variation de poids doit être un nombre valide (ex: 0,10).');
+        }
 
         if (($viande + $volaille + $poisson) !== 100) {
             return redirect()->back()->withInput()->with('error', 'La somme des pourcentages doit être égale à 100%.');
@@ -182,16 +206,16 @@ class RegimeController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Incohérence entre durées et prix fournis.');
         }
 
-        for ($i = 0; $i < count($durees) -1; $i++) {
+        for ($i = 0; $i < count($durees); $i++) {
             $rawD = $durees[$i];
             $rawP = $prixs[$i] ?? null;
             $d = intval($rawD);
-            $p = is_numeric($rawP) ? floatval($rawP) : null;
+            $p = $this->normalizeDecimal($rawP);
 
             if ($d <= 0) {
                 return redirect()->back()->withInput()->with('error', "Durée invalide à la ligne " . ($i+1) . ": \"" . $rawD . "\". Chaque durée doit être un entier positif.");
             }
-            if ($rawP === null || !is_numeric($rawP) || $p < 0) {
+            if ($rawP === null || $p === null || $p < 0) {
                 return redirect()->back()->withInput()->with('error', "Prix invalide à la ligne " . ($i+1) . ": \"" . ($rawP ?? '') . "\". Chaque prix doit être un nombre >= 0.");
             }
         }
@@ -212,9 +236,9 @@ class RegimeController extends BaseController
   
             $db->table('diet_prix')->where('id_diet', $id)->delete();
 
-            for ($i = 0; $i < count($durees)-1; $i++) {
+            for ($i = 0; $i < count($durees); $i++) {
                 $d = intval($durees[$i]);
-                $p = floatval($prixs[$i]);
+                $p = $this->normalizeDecimal($prixs[$i]);
                 $db->table('diet_prix')->insert([
                     'id_diet' => $id,
                     'duree'   => $d,

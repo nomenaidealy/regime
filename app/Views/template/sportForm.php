@@ -51,7 +51,7 @@
         </div>
         <div class="field">
           <label>Variation poids par séance (kg)</label>
-          <input type="number" name="variation_poids_seance" step="0.01" placeholder="Ex: 0.05" value="<?= esc($sport['variation_poids_seance'] ?? '') ?>">
+          <input type="text" name="variation_poids_seance" inputmode="decimal" placeholder="Ex: 0,05" value="<?= esc($sport['variation_poids_seance'] ?? '') ?>">
         </div>
         <div class="field">
           <label>Description</label>

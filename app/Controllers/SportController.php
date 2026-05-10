@@ -7,6 +7,21 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class SportController extends BaseController
 {
+    private function normalizeDecimal($value): ?float
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        $value = str_replace(',', '.', $value);
+        return is_numeric($value) ? (float) $value : null;
+    }
+
     public function form()
     {
         return view('template/sportForm');
@@ -19,14 +34,14 @@ class SportController extends BaseController
         $data = $this->request->getPost();
         $libelle = trim($data['libelle'] ?? '');
         $description = $data['description'] ?? '';
-        $variation_poids = $data['variation_poids_seance'] ?? '';
+        $variation_poids = $this->normalizeDecimal($data['variation_poids_seance'] ?? null);
 
         if ($libelle === '') {
             return redirect()->back()->withInput()->with('error', 'Le libellé est requis.');
         }
 
-        if ($variation_poids === '' || !is_numeric($variation_poids)) {
-            return redirect()->back()->withInput()->with('error', 'La variation de poids doit être un nombre.');
+        if ($variation_poids === null) {
+            return redirect()->back()->withInput()->with('error', 'La variation de poids doit être un nombre (ex: 0,05).');
         }
 
         // Prevent duplicate libelle
@@ -66,16 +81,20 @@ class SportController extends BaseController
         $data = $this->request->getPost();
         $libelle = trim($data['libelle'] ?? '');
         $description = $data['description'] ?? '';
-        $variation_poids = $data['variation_poids_seance'] ?? '';
+        $variation_poids = $this->normalizeDecimal($data['variation_poids_seance'] ?? null);
 
         if ($libelle === '') {
             return redirect()->back()->withInput()->with('error', 'Le libellé est requis.');
         }
 
+        if ($variation_poids === null) {
+            return redirect()->back()->withInput()->with('error', 'La variation de poids doit être un nombre (ex: 0,05).');
+        }
+
         $updateData = [
             'libelle' => $libelle,
             'description' => $description,
-            'variation_poids_seance' => (is_numeric($variation_poids) ? $variation_poids : null),
+            'variation_poids_seance' => $variation_poids,
         ];
 
         try {

@@ -141,7 +141,7 @@
           </div>
           <div class="field">
             <label>Quantité (kg/jour)</label>
-            <input type="number" name="variation_valeur" id="variation_valeur" placeholder="Ex: 0.10" step="0.01" min="0.01" max="1" value="<?= isset($diet['variation_poids_jour']) ? abs($diet['variation_poids_jour']) : '' ?>">
+            <input type="text" name="variation_valeur" id="variation_valeur" placeholder="Ex: 0,10" inputmode="decimal" value="<?= isset($diet['variation_poids_jour']) ? abs($diet['variation_poids_jour']) : '' ?>">
             <input type="hidden" name="variation_poids_jour" id="hidden_variation" value="<?= isset($diet['variation_poids_jour']) ? esc($diet['variation_poids_jour']) : '' ?>">
           </div>
         </div>
@@ -185,7 +185,7 @@
               <?php foreach ($prixs as $pr): ?>
                 <div class="prix-row dynamique" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
                   <input type="number" name="duree[]" class="input-duree" placeholder="Durée (jours)" min="1" value="<?= esc($pr['duree']) ?>" style="width:120px;">
-                  <input type="number" name="prix[]" class="input-prix" placeholder="Prix en Ar" min="0" value="<?= esc($pr['prix']) ?>" style="width:140px;">
+                  <input type="text" name="prix[]" class="input-prix" placeholder="Prix en Ar" inputmode="decimal" value="<?= esc($pr['prix']) ?>" style="width:140px;">
                   <button type="button" class="btn-remove" onclick="removeDureeRow(this)" title="Supprimer" style="background:none;border:none;color:#A93226;font-size:18px;">&times;</button>
                 </div>
               <?php endforeach; ?>
@@ -193,7 +193,7 @@
               <!-- Ligne initiale par défaut -->
               <div class="prix-row dynamique" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
                 <input type="number" name="duree[]" class="input-duree" placeholder="Durée (jours)" min="1" value="30" style="width:120px;">
-                <input type="number" name="prix[]" class="input-prix" placeholder="Prix en Ar" min="0" style="width:140px;">
+                <input type="text" name="prix[]" class="input-prix" placeholder="Prix en Ar" inputmode="decimal" style="width:140px;">
                 <button type="button" class="btn-remove" onclick="removeDureeRow(this)" title="Supprimer" style="background:none;border:none;color:#A93226;font-size:18px;">&times;</button>
               </div>
             <?php endif; ?>
@@ -203,7 +203,7 @@
           <div id="prixRowTemplate" style="display:none;">
             <div class="prix-row dynamique" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
               <input type="number" name="duree[]" class="input-duree" placeholder="Durée (jours)" min="1" style="width:120px;">
-              <input type="number" name="prix[]" class="input-prix" placeholder="Prix en Ar" min="0" style="width:140px;">
+              <input type="text" name="prix[]" class="input-prix" placeholder="Prix en Ar" inputmode="decimal" style="width:140px;">
               <button type="button" class="btn-remove" onclick="removeDureeRow(this)" title="Supprimer" style="background:none;border:none;color:#A93226;font-size:18px;">&times;</button>
             </div>
           </div>
@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function(){
 // Préparer la variation avant submit
 function prepareSubmit() {
   const sens   = document.querySelector('input[name="sens_variation"]:checked');
-  const valeur = parseFloat(document.getElementById('variation_valeur').value);
+  const valeur = parseFloat((document.getElementById('variation_valeur').value || '').toString().replace(',', '.'));
 
   if (!sens) { alert('Veuillez choisir le sens de variation.'); return false; }
   if (!valeur || valeur <= 0) { alert('Veuillez entrer une valeur de variation valide.'); return false; }
@@ -318,7 +318,7 @@ function prepareSubmit() {
       return false;
     }
     const dr = parseInt(rawDr, 10);
-    const pr = parseFloat(rawPr);
+    const pr = parseFloat((rawPr || '').replace(',', '.'));
     if (isNaN(dr) || dr <= 0) {
       alert('Durée invalide à la ligne ' + (i+1) + ' : "' + rawDr + '"\nLa durée doit être un entier positif.');
       return false;
