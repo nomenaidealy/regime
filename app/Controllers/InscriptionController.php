@@ -97,6 +97,6 @@ class InscriptionController extends Controller
             'isLoggedIn' => true
         ]);
         session()->remove(['inscription_step1', 'inscription_step2', 'inscription_step3']);
-        return $this->response->setJSON(['success' => true, 'redirect' => '/dashboard']);
+        return $this->response->setJSON(['success' => true, 'redirect' => '']);
     }
 }
