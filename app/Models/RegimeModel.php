@@ -14,6 +14,115 @@ class RegimeModel extends Model
     protected $protectFields    = true;
     protected $allowedFields    = ['nom', 'description' , 'variation_poids_jour' , 'viande_percent', 'volaille_percent', 'poisson_percent', 'id_sport'];
 
+    public function getAllSports(): array
+    {
+        return $this->db->table('sport')->get()->getResultArray();
+    }
+
+    public function getAdminRegimesList(): array
+    {
+        return $this->db->table('diet d')
+            ->select([
+                'd.id AS diet_id',
+                'd.nom AS diet_nom',
+                'd.description AS diet_description',
+                'd.viande_percent',
+                'd.volaille_percent',
+                'd.poisson_percent',
+                'd.variation_poids_jour',
+                'd.id_sport',
+                's.id AS sport_id',
+                's.libelle AS sport_libelle',
+                's.variation_poids_seance',
+                'dp.prix AS prix_30',
+            ])
+            ->join('sport s', 's.id = d.id_sport', 'left')
+            ->join('diet_prix dp', 'dp.id_diet = d.id AND dp.duree = 30', 'left')
+            ->get()
+            ->getResultArray();
+    }
+
+    public function existsByNom(string $nom, ?int $excludeId = null): bool
+    {
+        $builder = $this->db->table('diet')->where('nom', $nom);
+
+        if ($excludeId !== null) {
+            $builder->where('id !=', $excludeId);
+        }
+
+        return $builder->get()->getRowArray() !== null;
+    }
+
+    public function createWithPrices(array $dietData, array $prices): int|false
+    {
+        $this->db->transStart();
+
+        $this->db->table('diet')->insert($dietData);
+        $dietId = (int) $this->db->insertID();
+
+        foreach ($prices as $priceData) {
+            $this->db->table('diet_prix')->insert([
+                'id_diet' => $dietId,
+                'duree' => (int) $priceData['duree'],
+                'prix' => (float) $priceData['prix'],
+            ]);
+        }
+
+        $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            return false;
+        }
+
+        return $dietId;
+    }
+
+    public function updateWithPrices(int $id, array $dietData, array $prices): bool
+    {
+        $this->db->transStart();
+
+        $this->db->table('diet')->where('id', $id)->update($dietData);
+        $this->db->table('diet_prix')->where('id_diet', $id)->delete();
+
+        foreach ($prices as $priceData) {
+            $this->db->table('diet_prix')->insert([
+                'id_diet' => $id,
+                'duree' => (int) $priceData['duree'],
+                'prix' => (float) $priceData['prix'],
+            ]);
+        }
+
+        $this->db->transComplete();
+
+        return $this->db->transStatus();
+    }
+
+    public function getForEdit(int $id): array
+    {
+        $diet = $this->db->table('diet')->where('id', $id)->get()->getRowArray();
+        if (!$diet) {
+            return [];
+        }
+
+        return [
+            'diet' => $diet,
+            'prixs' => $this->db->table('diet_prix')->where('id_diet', $id)->orderBy('duree')->get()->getResultArray(),
+            'sports' => $this->getAllSports(),
+        ];
+    }
+
+    public function deleteWithPrices(int $id): bool
+    {
+        $this->db->transStart();
+
+        $this->db->table('diet_prix')->where('id_diet', $id)->delete();
+        $this->db->table('diet')->where('id', $id)->delete();
+
+        $this->db->transComplete();
+
+        return $this->db->transStatus();
+    }
+
     
 
     /**
