@@ -30,6 +30,11 @@ class DemandeGoldController extends BaseController
     {
         $userId = (int) $this->session->get('user_id');
 
+        if (!$userId) {
+            return redirect()->to('login')
+                ->with('error', 'Vous devez être connecté pour activer l’option Gold.');
+        }
+
         if ($this->demandeGoldModel->demandeExistante($userId)) {
             return redirect()->to('user/dashboard')
                 ->with('warning', 'Vous avez déjà une demande Gold en cours ou active.');
@@ -53,7 +58,12 @@ class DemandeGoldController extends BaseController
     {
         $userId = (int) $this->session->get('user_id');
 
-        // ✅ Re-vérifier même en POST (double soumission possible)
+        if (!$userId) {
+            return redirect()->to('login')
+                ->with('error', 'Vous devez être connecté pour activer l’option Gold.');
+        }
+
+       
         if ($this->demandeGoldModel->demandeExistante($userId)) {
             return redirect()->to('user/dashboard')
                 ->with('warning', 'Vous avez déjà une demande Gold en cours ou active.');

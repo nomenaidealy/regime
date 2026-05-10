@@ -154,7 +154,7 @@
     <div class="gc-note">
         <?= ($gold['percent'] * 100) ?>% de remise permanente sur tous vos régimes
     </div>
-      <a href="<?= base_url('user/gold/activate') ?>" class="btn-gold">
+      <a href="<?= session()->get('user_id') ? base_url('user/gold/activate') : base_url('login') ?>" class="btn-gold">
         Activer l'option Gold
       </a>
     </div>

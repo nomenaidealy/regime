@@ -30,7 +30,7 @@ class CodePromoController extends Controller
             return redirect()->to('login')->with('error', 'Vous devez être connecté');
         }
 
-        return view('template/codePromoForm');
+        return view('template/user/codepromo/form');
     }
 
   
