@@ -59,7 +59,7 @@ $routes->group('admin', ['filter' => 'admin'], static function ($routes) {
     $routes->post('gold/valider',          'DemandeGoldController::adminValider');
     $routes->post('gold/rejeter',          'DemandeGoldController::adminRejeter');
 	$routes->get('gold/new',               'GoldController::adminNewIndex');
-	$routes->post('gold/new',              'GoldController::adminNew');
+	$routes->add('gold/new',               'GoldController::adminNew');
 	$routes->get('gold/debug-insert',      'GoldController::adminDebugInsert');
 	// Edit regime
 	$routes->get('regimes/create',        'RegimeController::form');
