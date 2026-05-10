@@ -53,10 +53,8 @@
               <th style="padding:12px; text-align:left; font-weight:600;">Code</th>
               <th style="padding:12px; text-align:left; font-weight:600;">Montant</th>
               <th style="padding:12px; text-align:left; font-weight:600;">Demandes</th>
-              <th style="padding:12px; text-align:left; font-weight:600;">En attente</th>
-              <th style="padding:12px; text-align:left; font-weight:600;">Validées</th>
-              <th style="padding:12px; text-align:left; font-weight:600;">Rejetées</th>
               <th style="padding:12px; text-align:left; font-weight:600;">Dernière demande</th>
+              <th style="padding:12px; text-align:left; font-weight:600;">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -65,11 +63,19 @@
                 <td style="padding:12px; font-weight:600;"><?= esc($code['code']) ?></td>
                 <td style="padding:12px;"><?= number_format($code['montant'], 2) ?> €</td>
                 <td style="padding:12px;"><?= esc($code['total_demandes'] ?? 0) ?></td>
-                <td style="padding:12px;"><?= esc($code['demandes_en_attente'] ?? 0) ?></td>
-                <td style="padding:12px;"><?= esc($code['demandes_validees'] ?? 0) ?></td>
-                <td style="padding:12px;"><?= esc($code['demandes_rejetees'] ?? 0) ?></td>
                 <td style="padding:12px;">
                   <?= !empty($code['derniere_demande']) ? esc($code['derniere_demande']) : '—' ?>
+                </td>
+                <td style="padding:12px;">
+                  <?php
+                    $isPris = ($code['statut_pris'] ?? 'Non pris') === 'Pris';
+                    $bg = $isPris ? '#d4edda' : '#f8d7da';
+                    $color = $isPris ? '#155724' : '#721c24';
+                    $border = $isPris ? '#28a745' : '#f5c6cb';
+                  ?>
+                  <span style="display:inline-block; padding:4px 10px; border-radius:20px; background:<?= $bg ?>; border:1px solid <?= $border ?>; color:<?= $color ?>; font-size:12px; font-weight:600;">
+                    <?= esc($code['statut_pris'] ?? 'Non pris') ?>
+                  </span>
                 </td>
               </tr>
             <?php endforeach; ?>

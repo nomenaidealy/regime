@@ -70,7 +70,8 @@ class CodePromoModel extends Model
                  SUM(CASE WHEN dc.statut = "EN_ATTENTE" THEN 1 ELSE 0 END) AS demandes_en_attente,
                  SUM(CASE WHEN dc.statut = "VALIDE" THEN 1 ELSE 0 END) AS demandes_validees,
                  SUM(CASE WHEN dc.statut = "REJETE" THEN 1 ELSE 0 END) AS demandes_rejetees,
-                 MAX(dc.date_demande) AS derniere_demande'
+                 MAX(dc.date_demande) AS derniere_demande,
+                 CASE WHEN COUNT(dc.id) > 0 THEN "Pris" ELSE "Non pris" END AS statut_pris'
             )
             ->join('demande_code_promo dc', 'dc.id_code_promo = cp.id', 'left')
             ->groupBy('cp.id, cp.code, cp.montant')

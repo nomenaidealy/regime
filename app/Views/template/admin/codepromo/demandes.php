@@ -14,15 +14,23 @@
         Validez ou rejetez les demandes en attente.
       </p>
     </div>
-    <!-- Badge notifications non lues -->
-    <div style="position:relative; display:inline-block;">
-      <i class="bi bi-bell" style="font-size:22px; color:#444;"></i>
-      <span id="badgeNotif"
-            style="display:none; position:absolute; top:-6px; right:-8px;
-                   background:#e74c3c; color:#fff; font-size:10px; font-weight:700;
-                   border-radius:50%; width:18px; height:18px;
-                   line-height:18px; text-align:center;">
-      </span>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <a href="<?= base_url('admin/codepromo/create') ?>"
+         style="background:#1a73e8; color:#fff; padding:10px 14px; border-radius:8px;
+                text-decoration:none; font-size:13px; font-weight:600; display:inline-block;">
+        <i class="bi bi-plus-circle"></i> Créer un nouveau codepromo
+      </a>
+
+      <!-- Badge notifications non lues -->
+      <div style="position:relative; display:inline-block;">
+        <i class="bi bi-bell" style="font-size:22px; color:#444;"></i>
+        <span id="badgeNotif"
+              style="display:none; position:absolute; top:-6px; right:-8px;
+                     background:#e74c3c; color:#fff; font-size:10px; font-weight:700;
+                     border-radius:50%; width:18px; height:18px;
+                     line-height:18px; text-align:center;">
+        </span>
+      </div>
     </div>
   </div>
 
