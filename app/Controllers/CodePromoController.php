@@ -106,7 +106,7 @@ class CodePromoController extends Controller
             return redirect()->to('/')->with('error', 'Accès administrateur requis');
         }
 
-        return view('template/codePromoAdminForm');
+        return view('template/admin/codepromo/form');
     }
 
     public function adminCreate()
@@ -141,7 +141,7 @@ class CodePromoController extends Controller
             return redirect()->to('/')->with('error', 'Accès administrateur requis');
         }
 
-        return view('template/codePromoAdminList', [
+        return view('template/admin/codepromo/list', [
             'codes' => $this->codePromoModel->getAllWithDemandStats(),
         ]);
     }
@@ -174,7 +174,7 @@ class CodePromoController extends Controller
 
         $statut = $this->request->getGet('statut') ?? null;
 
-        return view('template/codePromoAdminDemandes', [
+        return view('template/admin/codepromo/demandes', [
             'demandes' => $this->demandeModel->getAllWithDetails($statut),
             'statut'   => $statut,
         ]);

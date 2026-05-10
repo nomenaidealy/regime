@@ -16,7 +16,7 @@ class UserController extends Controller
     // ─────────────────────────────────────────
     public function inscription()
     {
-        return view('template/inscription');
+        return view('template/user/inscription');
     }
 
     protected $userModel;
@@ -133,7 +133,7 @@ class UserController extends Controller
         $data = $userModel->getMesRegimesData($userId);
         if (empty($data)) return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
 
-        return view('template/mesRegimes', $data);
+        return view('template/user/regime/list', $data);
     }
 
     /**
@@ -161,7 +161,7 @@ class UserController extends Controller
 
         if (empty($details)) return redirect()->to('/user/mes-regimes')->with('error', 'Régime introuvable.');
 
-        return view('template/regimeDetails', [
+        return view('template/user/regime/detail', [
             'regime' => $details['regime'],
             'prixs' => $details['prixs'],
             'jours_estimes' => $details['jours_estimes'],
@@ -215,7 +215,7 @@ class UserController extends Controller
         $data = $userModel->getProfilData($userId);
         if (empty($data)) return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
 
-        return view('profil', $data);
+        return view('template/user/profil', $data);
     }
 
 }

@@ -65,7 +65,7 @@ class AdminController extends BaseController
             ],
         ];
 
-        return view('template/adminDashboard', ['stats' => $stats]);
+        return view('template/admin/dashboard', ['stats' => $stats]);
     }
 
     public function logout()

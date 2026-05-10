@@ -9,7 +9,7 @@ class InscriptionController extends Controller
     // Affiche la page d'inscription
     public function index()
     {
-        return view('template/inscription');
+        return view('template/user/inscription');
     }
 
     // Validation AJAX étape 1

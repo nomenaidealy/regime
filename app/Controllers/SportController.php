@@ -24,7 +24,7 @@ class SportController extends BaseController
 
     public function form()
     {
-        return view('template/sportForm');
+        return view('template/admin/sport/form');
     }
 
 
@@ -62,7 +62,7 @@ class SportController extends BaseController
     {
         $sportModel = new \App\Models\SportModel();
         $sports = $sportModel->findAll();
-        return view('template/sportList', ['sports' => $sports]);
+        return view('template/admin/sport/list', ['sports' => $sports]);
     }
 
     public function update($id)
@@ -121,7 +121,7 @@ class SportController extends BaseController
             return redirect()->to('/admin/sports')->with('error', 'Impossible de charger l\'activité : ' . $e->getMessage());
         }
 
-        return view('template/sportForm', ['sport' => $sport, 'mode' => 'edit']);
+        return view('template/admin/sport/form', ['sport' => $sport, 'mode' => 'edit']);
     }
 
     /**
@@ -145,7 +145,7 @@ class SportController extends BaseController
             return redirect()->to('/admin/sports')->with('error', 'Impossible d\'accéder à la base : ' . $e->getMessage());
         }
 
-        return view('template/sportDeleteConfirm', ['sport' => $sport, 'diets' => $diets]);
+        return view('template/admin/sport/deleteconfirm', ['sport' => $sport, 'diets' => $diets]);
     }
 
     /**

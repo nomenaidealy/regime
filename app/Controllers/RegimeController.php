@@ -31,7 +31,7 @@ class RegimeController extends BaseController
             $sports = [];
         }
 
-        return view('template/regimeForm', ['sports' => $sports]);
+        return view('template/admin/regime/form', ['sports' => $sports]);
     }
 
     public function list()
@@ -63,7 +63,7 @@ class RegimeController extends BaseController
             $regimes = [];
         }
 
-        return view('template/regimeList', ['regimes' => $regimes]);
+        return view('template/admin/regime/list', ['regimes' => $regimes]);
     }
 
 
@@ -281,7 +281,7 @@ class RegimeController extends BaseController
             return redirect()->to('admin/regimes');
         }
 
-        return view('template/regimeForm', [
+        return view('template/admin/regime/form', [
             'diet' => $diet,
             'prixs' => $prixs,
             'sports' => $sports,

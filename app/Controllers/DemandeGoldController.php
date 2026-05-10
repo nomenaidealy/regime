@@ -111,7 +111,7 @@ class DemandeGoldController extends BaseController
 
         $statut = $this->request->getGet('statut') ?? null;
 
-        return view('template/demandeGoldAdmin', [
+        return view('template/admin/gold/demandes', [
             'demandes' => $this->demandeGoldModel->getAllWithDetails($statut),
             'statut'   => $statut,
         ]);
