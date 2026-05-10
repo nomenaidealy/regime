@@ -80,6 +80,9 @@
       <a href="<?= base_url('admin/sports') ?>">Activités Sportives</a>
       <a href="<?= base_url('admin/codepromo/demandes') ?>">Codes Promo</a>
       <a href="<?= base_url('admin/gold/demandes') ?>">Demandes Gold</a>
+      <a href="<?= base_url('admin/gold/new') ?>" title="Paramètres Gold" style="display:inline-flex; align-items:center; gap:6px;">
+        <i class="bi bi-gear-fill"></i> Paramètres Gold
+      </a>
       <a href="<?= base_url('admin/dashboard') ?>">Dashboard</a>
       <a href="<?= base_url('admin/logout') ?>" class="btn-nav">Déconnexion</a>
 

@@ -12,7 +12,7 @@ class GoldModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['prix', 'date_update'];
+    protected $allowedFields = ['prix', 'percent', 'date_update'];
 
     public function getGoldPrixRecent(){
     $gold = $this 
@@ -21,4 +21,13 @@ class GoldModel extends Model
 
     return $gold;
 }
+    
+    public function createGoldConfig(float $prix, float $percent): int|false
+    {
+        return $this->insert([
+            'prix' => $prix,
+            'percent' => $percent,
+            'date_update' => date('Y-m-d H:i:s'),
+        ]);
+    }
 }
