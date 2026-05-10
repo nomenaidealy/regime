@@ -43,7 +43,7 @@ class DemandeGoldModel extends Model
     // ────────────────────────────────────────
 
     /**
-     * ✅ CORRECTION : la vérification d'existence doit aussi
+     * * CORRECTION : la vérification d'existence doit aussi
      * bloquer si une demande est déjà EN_ATTENTE ou VALIDE,
      * pas seulement chercher par id.
      */
@@ -80,7 +80,7 @@ class DemandeGoldModel extends Model
             'statut'          => 'REJETE',
             'date_traitement' => date('Y-m-d H:i:s'),
             'id_admin'        => $adminId,
-            'motif_rejet'     => $motif ?: null,   // ✅ null si vide, pas ''
+            'motif_rejet'     => $motif ?: null,   // * null si vide, pas ''
         ]);
     }
 
@@ -95,7 +95,7 @@ class DemandeGoldModel extends Model
                       a.login AS admin_login')
             ->join('users u', 'u.id = d.id_user')
             ->join('admin a', 'a.id = d.id_admin', 'left')
-            ->orderBy('d.date_demande', 'DESC');  // ✅ tri manquant
+            ->orderBy('d.date_demande', 'DESC');  // * tri manquant
 
         if ($statut) {
             $builder->where('d.statut', $statut);

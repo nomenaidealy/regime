@@ -16,7 +16,7 @@ class NotificationAdminModel extends Model
     protected $allowedFields = [
         'id_admin',
         'type',
-        'id_demande',      // ✅ Solution 2 : une seule colonne
+        'id_demande',      // * Solution 2 : une seule colonne
         'message',
         'lue',
         'date_creation',
@@ -28,7 +28,7 @@ class NotificationAdminModel extends Model
     // ────────────────────────────────────────
 
     /**
-     * ✅ Solution 2 : une seule méthode pour les 2 types.
+     * * Solution 2 : une seule méthode pour les 2 types.
      * Le type détermine dans quelle table chercher le demande_id.
      *
      * @param int    $demandeId  ID dans demande_code_promo OU demande_gold
@@ -54,7 +54,7 @@ class NotificationAdminModel extends Model
     // ────────────────────────────────────────
 
     /**
-     * ✅ Solution 2 : on filtre par type + demande_id
+     * * Solution 2 : on filtre par type + demande_id
      * pour éviter les collisions (un id=1 existe dans les 2 tables).
      */
     public function marquerLue(int $demandeId, string $type): bool
@@ -73,12 +73,12 @@ class NotificationAdminModel extends Model
     // ────────────────────────────────────────
 
     /**
-     * ✅ Solution 2 : UNION des 2 types pour afficher
+     * * Solution 2 : UNION des 2 types pour afficher
      * toutes les notifs dans un seul panel admin.
      */
     public function getNonLues(): array
 {
-    // ✅ n.id_demande (pas n.demande_id)
+    // * n.id_demande (pas n.demande_id)
     $sqlCodePromo = "
         SELECT
             n.id,

@@ -74,7 +74,7 @@ class DemandeGoldController extends BaseController
         $user     = $db->table('users')->where('id', $userId)->get()->getRow();
         $userName = $user ? $user->nom : "Utilisateur #{$userId}";
 
-        // ✅ Tout dans une transaction pour garantir cohérence
+        // * Tout dans une transaction pour garantir cohérence
         $db->transStart();
 
         $demandeId = $this->demandeGoldModel->creerDemande($userId);
@@ -85,7 +85,7 @@ class DemandeGoldController extends BaseController
                 ->with('error', 'Erreur lors de la création de la demande.');
         }
 
-        // ✅ Notification insérée dans la même transaction
+        // * Notification insérée dans la même transaction
         $notified = $this->notifModel->creerNotification(
             $demandeId,
             "Nouvelle demande Gold de {$userName}",
@@ -139,7 +139,7 @@ class DemandeGoldController extends BaseController
             ]);
         }
 
-        // ✅ CORRECTION : était 'id_demande', maintenant unifié avec 'demande_id'
+        // * CORRECTION : était 'id_demande', maintenant unifié avec 'demande_id'
         $demandeId = (int) $this->request->getPost('demande_id');
         $adminId   = (int) $this->session->get('admin_id');
 
@@ -181,7 +181,7 @@ class DemandeGoldController extends BaseController
             ]);
         }
 
-        // ✅ Transaction : débit + gold + validation + notif lue
+        // * Transaction : débit + gold + validation + notif lue
         $db->transStart();
 
         $newBalance     = $currentBalance - (float) $gold['prix'];
@@ -223,7 +223,7 @@ class DemandeGoldController extends BaseController
             ]);
         }
 
-        // ✅ Unifié avec 'demande_id'
+        // * Unifié avec 'demande_id'
         $demandeId = (int) $this->request->getPost('demande_id');
         $adminId   = (int) $this->session->get('admin_id');
         $motif     = trim($this->request->getPost('motif') ?? '');
