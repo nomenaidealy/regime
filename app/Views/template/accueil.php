@@ -4,19 +4,35 @@
 <?= $this->section('content') ?>
 <!-- NAV -->
 
-
+<style>
+  .about {
+    background: 
+      linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.75)),
+      url('<?= base_url("assets/images/jpeg") ?>') center/cover no-repeat;
+  }
+</style>
 <!-- HERO -->
+
+
 <section class="hero">
-  <div class="hero-badge"><i class="bi bi-leaf"></i> Application de régime alimentaire personnalisé</div>
-  <h1>Bienvenue sur <em>NutriPlan</em> — mangez mieux, vivez mieux</h1>
-  <p>NutriPlan est une application intelligente qui calcule votre IMC, analyse vos objectifs et vous propose un programme alimentaire et sportif entièrement personnalisé.</p>
-  <div class="hero-actions">
-    <a href="inscription" class="btn-primary">Créer mon compte <i class="bi bi-arrow-right"></i></a>
-    <a href="#about" class="btn-outline">En savoir plus</a>
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="hero-badge"><i class="bi bi-leaf"></i> Application de régime alimentaire personnalisé</div>
+      <h1>Bienvenue sur <em>NutriPlan</em> — mangez mieux, vivez mieux</h1>
+      <p>NutriPlan est une application intelligente qui calcule votre IMC, analyse vos objectifs et vous propose un programme alimentaire et sportif entièrement personnalisé.</p>
+      <div class="hero-actions">
+        <a href="inscription" class="btn-primary">Créer mon compte <i class="bi bi-arrow-right"></i></a>
+        <a href="#about" class="btn-outline">En savoir plus</a>
+      </div>
+    </div>
+
+    <div class="hero-image">
+      <img src="<?= base_url('assets/images/diet.jpeg') ?>" alt="Alimentation saine NutriPlan" />
+    </div>
   </div>
+
   <div class="scroll-hint"><span><i class="bi bi-arrow-down"></i></span>Découvrir</div>
 </section>
-
 <!-- À PROPOS -->
 <section class="about" id="about">
   <div>
@@ -52,35 +68,48 @@
 
 <!-- MISSION -->
 <section class="mission" id="mission">
-  <div class="section-tag">Notre mission</div>
-  <div class="section-title">Pourquoi NutriPlan existe ?</div>
-  <div class="section-sub">Nous croyons que chaque personne mérite un accompagnement nutritionnel adapté à son corps, ses objectifs et son mode de vie — sans complexité ni jargon médical.</div>
-  <div class="mission-grid">
-    <div class="mission-card">
-      <div class="mission-icon"><i class="bi bi-bullseye"></i></div>
-      <h3>Personnalisation totale</h3>
-      <p>NutriPlan ne propose jamais un régime générique. Chaque suggestion est construite sur vos données réelles : taille, poids, genre et objectif personnel choisi.</p>
+  <div class="mission-left">
+    <div class="section-tag">Notre mission</div>
+    <div class="section-title">Pourquoi NutriPlan existe ?</div>
+    <div class="section-sub">Nous croyons que chaque personne mérite un accompagnement nutritionnel adapté à son corps, ses objectifs et son mode de vie.</div>
+    <div class="mission-grid">
+      <div class="mission-card">
+        <div class="mission-icon"><i class="bi bi-bullseye"></i></div>
+        <h3>Personnalisation totale</h3>
+        <p>NutriPlan ne propose jamais un régime générique. Chaque suggestion est construite sur vos données réelles.</p>
+      </div>
+      <div class="mission-card">
+        <div class="mission-icon"><i class="bi bi-graph-up-arrow"></i></div>
+        <h3>Approche fondée sur les données</h3>
+        <p>L'IMC est la référence scientifique mondiale. NutriPlan l'exploite pour vous orienter vers les programmes les plus pertinents.</p>
+      </div>
+      <div class="mission-card">
+        <div class="mission-icon"><i class="bi bi-phone"></i></div>
+        <h3>Simple et accessible à tous</h3>
+        <p>Une interface claire, un processus guidé en 3 étapes, un résultat immédiat.</p>
+      </div>
     </div>
-    <div class="mission-card">
-      <div class="mission-icon"><i class="bi bi-graph-up-arrow"></i></div>
-      <h3>Approche fondée sur les données</h3>
-      <p>L'IMC est la référence scientifique mondiale pour évaluer la corpulence. NutriPlan l'exploite pour vous orienter vers les programmes les plus pertinents pour votre profil.</p>
-    </div>
-    <div class="mission-card">
-      <div class="mission-icon"><i class="bi bi-phone"></i></div>
-      <h3>Simple et accessible à tous</h3>
-      <p>Une interface claire, un processus guidé en 3 étapes, un résultat immédiat. NutriPlan est conçu pour être utilisé sans expertise préalable en nutrition.</p>
-    </div>
+  </div>
+
+  <div class="mission-right">
+    <img src="<?= base_url('assets/images/mission') ?>" alt="Mission NutriPlan" />
   </div>
 </section>
 
 <!-- FONCTIONNALITÉS -->
 <section class="features" id="fonctionnalites">
+
+  <!-- Images décoratives -->
+  <img src="<?= base_url('assets/images/fonctionnalite.jpeg') ?>" class="feat-deco feat-deco-1" alt="">
+  <img src="<?= base_url('assets/images/fonctionnalite.jpeg') ?>" class="feat-deco feat-deco-2" alt="">
+  <img src="<?= base_url('assets/images/fonctionnalite.jpeg') ?>" class="feat-deco feat-deco-3" alt="">
+  <img src="<?= base_url('assets/images/fonctionnalite.jpeg') ?>" class="feat-deco feat-deco-4" alt="">
+
   <div class="features-header">
     <div class="section-tag">Ce que propose NutriPlan</div>
     <div class="section-title">Toutes les fonctionnalités</div>
-    <div class="section-sub">Tout ce dont vous avez besoin pour commencer votre transformation nutritionnelle, réuni en une seule application.</div>
-  </div>
+   
+
   <div class="features-grid">
     <div class="feat">
       <div class="feat-num">1</div>
@@ -125,6 +154,7 @@
       </div>
     </div>
   </div>
+
 </section>
 
 <!-- GOLD -->
@@ -164,6 +194,11 @@
 
 <!-- WALLET -->
 <section class="wallet">
+  <!-- Image décorative gauche -->
+  <div class="wallet-image">
+    <img src="<?= base_url('assets/images/wallet.jpeg') ?>" alt="Portefeuille NutriPlan" />
+  </div>
+
   <div class="wallet-box">
     <div class="big-icon"><i class="bi bi-wallet2"></i></div>
     <h2>Le portefeuille NutriPlan</h2>
