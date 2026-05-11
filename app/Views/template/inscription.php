@@ -213,7 +213,7 @@
 
     
 
-  <button type="button" class="btn-next" onclick="submitForm()"><i class="bi bi-balloon-heart"></i> Créer mon compte</button>
+  <button type="button" class="btn-next" onclick="submit()"><i class="bi bi-balloon-heart"></i> Créer mon compte</button>
   <button type="button" class="btn-back" onclick="goTo(2)"><i class="bi bi-arrow-left"></i> Retour</button>
   </div>
 
@@ -280,6 +280,12 @@ async function goTo(step) {
  * Fonction utilitaire pour afficher les erreurs
  */
 function displayErrors(step, errors) {
+  // Vérifier que errors existe et n'est pas vide
+  if (!errors || typeof errors !== 'object') {
+    console.error('Erreur: errors est undefined ou invalide', errors);
+    return;
+  }
+
   if (step === 1) {
     clearStepErrors(1);
     if (errors.nom) document.querySelector('#step1 #nom + .err-msg').textContent = errors.nom;
@@ -400,7 +406,7 @@ function updateLeftSteps() {
 /**
  * Soumet le formulaire complet avec AJAX
  */
-async function submitForm() {
+async function submit() {
   // Validation finale étape 3
   if (!await validateAndProceed(3)) return;
 
@@ -434,16 +440,9 @@ async function submitForm() {
   formData.append('genre', document.querySelector('input[name="genre"]:checked').value);
   formData.append('taille', document.getElementById('taille').value);
   formData.append('poids', document.getElementById('poids').value);
+  formData.append('mdp', mdp);
   formData.append('objectif', document.querySelector('input[name="objectif"]:checked').value);
-  
-  // Ajouter valeur_objectif seulement si ce n'est pas l'objectif 3 (IMC idéal)
-  const objectifChoisi = document.querySelector('input[name="objectif"]:checked').value;
-  if (objectifChoisi !== '3') {
-    const valeurObjectif = document.getElementById('valeur_objectif').value;
-    if (valeurObjectif) {
-      formData.append('valeur_objectif', valeurObjectif);
-    }
-  }
+  formData.append('valeur_objectif', document.getElementById('valeur_objectif').value || 0);
 
   const response = await fetch('<?= base_url("api/complete-inscription") ?>', {
     method: 'POST',
@@ -514,15 +513,7 @@ document.querySelectorAll('input[name="objectif"]').forEach(radio => {
       msgImcIdeal.style.display = 'block';
     }
   });
-  
 });
-
-// Empêche le submit classique du formulaire
-document.getElementById('inscriptionForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  return false;
-});
-
 </script>
 
 

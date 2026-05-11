@@ -79,7 +79,7 @@ class UserModel extends Model
             ];
         }
 
-        return ['valid' => true];
+        return ['valid' => true, 'errors' => []];
     }
 
     /**
@@ -95,12 +95,11 @@ class UserModel extends Model
             'taille'  => 'required|numeric|greater_than[0]',
             'poids'   => 'required|numeric|greater_than[0]',
             'objectif' => 'required|is_natural_no_zero',
-            'valeur_objectif' => 'numeric|greater_than_equal_to[0]' 
         ];
-        log_message('valeur_objectif', '$data["valeur_objectif"]: ' . $data['valeur_objectif']); // Debug dans les logs
+
         $messages = [
-            'taille'  => ['required' => 'La taille est obligatoire', 'numeric' => 'Valeur numérique requise'],
-            'poids'   => ['required' => 'Le poids est obligatoire', 'numeric' => 'Valeur numérique requise'],
+            'taille'  => ['required' => 'La taille est obligatoire', 'numeric' => 'Valeur numérique requise', 'greater_than' => 'La taille doit être supérieure à 0'],
+            'poids'   => ['required' => 'Le poids est obligatoire', 'numeric' => 'Valeur numérique requise', 'greater_than' => 'Le poids doit être supérieur à 0'],
             'objectif' => ['required' => 'L\'objectif est obligatoire', 'is_natural_no_zero' => 'Objectif invalide'],
         ];
 
@@ -114,7 +113,7 @@ class UserModel extends Model
             ];
         }
 
-        return ['valid' => true];
+        return ['valid' => true, 'errors' => []];
     }
 
     /**
@@ -144,7 +143,7 @@ class UserModel extends Model
             ];
         }
 
-        return ['valid' => true];
+        return ['valid' => true, 'errors' => []];
     }
 
     /**

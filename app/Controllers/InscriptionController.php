@@ -39,19 +39,24 @@ class InscriptionController extends Controller
         if (!$this->request->isAJAX()) {
             return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
         }
-        $data = [
-            'taille'   => $this->request->getPost('taille'),
-            'poids'    => $this->request->getPost('poids'),
-            'objectif' => $this->request->getPost('objectif'),
-            'valeur_objectif' => $this->request->getPost('valeur_objectif'),
-        ];
-        $userModel = new UserModel();
-        $result = $userModel->validateStep2($data);
-        if ($result['valid']) {
-            session()->set('inscription_step2', $data);
-            return $this->response->setJSON(['success' => true, 'errors' => []]);
+        try {
+            $data = [
+                'taille'   => $this->request->getPost('taille'),
+                'poids'    => $this->request->getPost('poids'),
+                'objectif' => $this->request->getPost('objectif'),
+                'valeur_objectif' => $this->request->getPost('valeur_objectif') ?? '',
+            ];
+            $userModel = new UserModel();
+            $result = $userModel->validateStep2($data);
+            if ($result['valid']) {
+                // Conserver toutes les données en session, même valeur_objectif
+                session()->set('inscription_step2', $data);
+                return $this->response->setJSON(['success' => true, 'errors' => []]);
+            }
+            return $this->response->setJSON(['success' => false, 'errors' => $result['errors']]);
+        } catch (\Exception $e) {
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => $e->getMessage()]);
         }
-        return $this->response->setJSON(['success' => false, 'errors' => $result['errors']]);
     }
 
     // Validation AJAX étape 3
@@ -104,7 +109,7 @@ class InscriptionController extends Controller
         if ($objectifId === 3) {
             // Objectif 3 = "Atteindre son IMC idéal" → valeur = 22.5
             $valeurObjectif = 22.5;
-        } elseif (!empty($data['valeur_objectif'])) {
+        } elseif (isset($data['valeur_objectif']) && $data['valeur_objectif'] !== '' && $data['valeur_objectif'] !== '0') {
             // Objectifs 1 ou 2 → prendre la valeur saisie
             $valeurObjectif = (float)$data['valeur_objectif'];
         }
