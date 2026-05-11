@@ -4,33 +4,68 @@
 
 <?= $this->section('content') ?>
 
-<div style="max-width:900px; margin:40px auto; background:#fff; padding:22px; border-radius:8px;">
-  <h2>Confirmer suppression de l'activité</h2>
-  <p>Vous êtes sur le point de supprimer l'activité <strong><?= esc($sport['libelle'] ?? '') ?></strong>.</p>
+<link href="<?= base_url('assets/template/sportDelete.css') ?>" rel="stylesheet">
 
-  <?php if (!empty($diets)): ?>
-    <div style="background:#FFF7E6; padding:12px; border-radius:8px; margin-bottom:12px;">
-      <strong>Attention :</strong> les régimes suivants sont liés à cette activité et seront supprimés également :
-      <ul>
-        <?php foreach ($diets as $d): ?>
-          <li><?= esc($d['nom']) ?> (ID: <?= esc($d['id']) ?>)</li>
-        <?php endforeach; ?>
-      </ul>
+<div class="delete-page">
+  <div class="delete-card">
+    <div class="delete-header">
+      <div class="delete-badge"><i class="bi bi-exclamation-triangle-fill"></i> Suppression d'une activité</div>
+      <h1>Confirmer la suppression</h1>
+      <p>
+        Vous êtes sur le point de supprimer l'activité
+        <strong><?= esc($sport['libelle'] ?? '') ?></strong>.
+      </p>
     </div>
-  <?php else: ?>
-    <div style="background:#E6F7FF; padding:12px; border-radius:8px; margin-bottom:12px;">Aucun régime lié.</div>
-  <?php endif; ?>
 
-  <form action="<?= base_url('admin/sports/force-delete/' . ($sport['id'] ?? '')) ?>" method="POST">
-    <?= csrf_field() ?>
-    <a href="<?= base_url('admin/sports') ?>" class="btn-cancel">Annuler</a>
-    <button type="submit" class="btn-submit" style="background:#A93226;">Supprimer définitivement</button>
-  </form>
+    <?php if (!empty($diets)): ?>
+      <div class="delete-warning">
+        <div class="delete-warning-title">
+          <i class="bi bi-exclamation-circle-fill"></i>
+          Attention
+        </div>
+        <p>Les régimes suivants sont liés à cette activité et seront supprimés également :</p>
+        <ul>
+          <?php foreach ($diets as $d): ?>
+            <li>
+              <span><?= esc($d['nom']) ?></span>
+              <small>ID : <?= esc($d['id']) ?></small>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+    <?php else: ?>
+      <div class="delete-info">
+        <i class="bi bi-info-circle-fill"></i>
+        <div>
+          <strong>Aucun régime lié.</strong>
+          <p>La suppression n'affectera aucune fiche régime.</p>
+        </div>
+      </div>
+    <?php endif; ?>
 
-  <form action="<?= base_url('admin/sports/remove-keep-diets/' . ($sport['id'] ?? '')) ?>" method="POST" style="margin-top:12px;">
-    <?= csrf_field() ?>
-    <button type="submit" class="btn-submit" style="background:#2D6A4F;">Supprimer l'activité mais conserver les régimes (ajuster variation)</button>
-  </form>
+    <div class="delete-actions">
+      <a href="<?= base_url('admin/sports') ?>" class="btn-cancel">
+        <i class="bi bi-arrow-left"></i>
+        Annuler
+      </a>
+
+      <form action="<?= base_url('admin/sports/remove-keep-diets/' . ($sport['id'] ?? '')) ?>" method="POST" class="delete-form">
+        <?= csrf_field() ?>
+        <button type="submit" class="btn-secondary">
+          <i class="bi bi-shield-check"></i>
+          Supprimer en conservant les régimes
+        </button>
+      </form>
+
+      <form action="<?= base_url('admin/sports/force-delete/' . ($sport['id'] ?? '')) ?>" method="POST" class="delete-form">
+        <?= csrf_field() ?>
+        <button type="submit" class="btn-danger">
+          <i class="bi bi-trash-fill"></i>
+          Supprimer définitivement
+        </button>
+      </form>
+    </div>
+  </div>
 </div>
 
 <?= $this->endSection() ?>
