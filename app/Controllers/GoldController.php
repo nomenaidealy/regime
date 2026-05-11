@@ -2,70 +2,91 @@
 
 namespace App\Controllers;
 
+use App\Controllers\BaseController;
+use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\GoldModel;
-use CodeIgniter\Controller;
 
-class GoldController extends Controller
+class GoldController extends BaseController
 {
-    protected $goldModel;
-    protected $session;
-
-    public function __construct()
+     public function index()
     {
-        $this->goldModel = new GoldModel();
-        $this->session = session();
+        $goldModel = new GoldModel();
+
+        $data = $goldModel->getGoldPrixRecent();
+
+        return view('accueil', $data);
     }
 
-    // ────────────────────────────────────────
-    // ACTIVATE GOLD OPTION
-    // ────────────────────────────────────────
-
-    /**
-     * Active l'option Gold pour l'utilisateur connecté
-     * Redirige vers le dashboard après activation
-     */
-    public function activate()
+    // GET — affiche le formulaire de création/modification Gold
+    public function adminNewIndex()
     {
-        // Vérifier si l'utilisateur est connecté
-        $userId = $this->session->get('user_id');
-        
-        if (!$userId) {
-            return redirect()->to('login')->with('error', 'Vous devez être connecté pour activer l\'option Gold');
+        if (!session()->get('is_admin')) {
+            return redirect()->to('/')->with('error', 'Accès administrateur requis');
         }
 
-        // Vérifier si l'utilisateur n'a pas déjà l'option Gold
-        $existingGold = $this->goldModel
-            ->where('id_user', $userId)
-            ->first();
+        $goldModel = new GoldModel();
 
-        if ($existingGold) {
-            return redirect()->to('dashboard')->with('warning', 'Vous avez déjà l\'option Gold active');
-        }
-
-        // Accorder le statut Gold
-        $result = $this->goldModel->grantUserToGold($userId);
-
-        if ($result) {
-            return redirect()->to('dashboard')->with('success', 'Félicitations! Vous avez activé l\'option Gold');
-        } else {
-            return redirect()->to('dashboard')->with('error', 'Une erreur est survenue lors de l\'activation de l\'option Gold');
-        }
+        return view('template/admin/gold/new', [
+            'gold' => $goldModel->getGoldPrixRecent(),
+        ]);
     }
 
-    // ────────────────────────────────────────
-    // CHECK GOLD STATUS
-    // ────────────────────────────────────────
-
-    /**
-     * Vérifie si un utilisateur a l'option Gold active
-     * 
-     * @param int $userId L'ID de l'utilisateur
-     * @return bool True si Gold actif, false sinon
-     */
-    public function hasGold($userId)
+    // POST — traite la soumission du formulaire Gold
+    public function adminNew()
     {
-        return $this->goldModel
-            ->where('id_user', $userId)
-            ->first() !== null;
+        if (!session()->get('is_admin')) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès administrateur requis']);
+        }
+
+        $goldModel = new GoldModel();
+
+        // Log inputs for debugging
+        log_message('debug', 'Gold adminNew POST data: ' . json_encode($this->request->getPost()));
+        $prix = $this->request->getPost('prix');
+        $percent = $this->request->getPost('percent');
+
+        if (!is_numeric($prix) || (float) $prix <= 0) {
+            return redirect()->back()->withInput()->with('error', 'Le prix doit être un nombre supérieur à 0.');
+        }
+
+        if (!is_numeric($percent) || (float) $percent <= 0 || (float) $percent >= 1) {
+            return redirect()->back()->withInput()->with('error', 'La remise doit être un nombre décimal entre 0 et 1 (ex: 0.15).');
+        }
+
+        $saved = $goldModel->createGoldConfig((float) $prix, (float) $percent);
+        log_message('debug', 'Gold createGoldConfig returned: ' . var_export($saved, true));
+
+        if ($saved !== false) {
+            return redirect()->to('/admin/gold/new')->with('success', 'Configuration Gold enregistrée avec succès.');
+        }
+
+        // Récupérer l'erreur SQL pour diagnostiquer
+        $dbError = $goldModel->db->error();
+        $errMsg = 'Impossible d’enregistrer la configuration Gold.';
+        if (!empty($dbError['message'])) {
+            $errMsg .= ' SQL error: ' . $dbError['message'] . ' (code ' . ($dbError['code'] ?? 'N/A') . ')';
+        }
+
+        return redirect()->back()->withInput()->with('error', $errMsg);
+    }
+
+    // Debug helper: attempt a test insert and return result (admin only)
+    public function adminDebugInsert()
+    {
+        if (!session()->get('is_admin')) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès admin requis']);
+        }
+
+        $goldModel = new GoldModel();
+        $prix = 1.00;
+        $percent = 0.10;
+
+        $id = $goldModel->createGoldConfig($prix, $percent);
+        if ($id !== false) {
+            return $this->response->setJSON(['success' => true, 'insertId' => $id]);
+        }
+
+        $err = $goldModel->db->error();
+        return $this->response->setJSON(['success' => false, 'error' => $err]);
     }
 }

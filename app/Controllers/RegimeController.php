@@ -4,70 +4,71 @@ use App\Controllers\BaseController;
 
 class RegimeController extends BaseController
 {
+    private function normalizeDecimal($value): ?float
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        $value = str_replace(',', '.', $value);
+
+        return is_numeric($value) ? (float) $value : null;
+    }
+
     public function form()
     {
         try {
-            $db     = \Config\Database::connect();
-            $sports = $db->table('sport')->get()->getResultArray();
+            $regimeModel = new \App\Models\RegimeModel();
+            $sports = $regimeModel->getAllSports();
         } catch (\Throwable $e) {
          
             session()->setFlashdata('error', 'Impossible de récupérer la liste des sports : base de données inaccessible.');
             $sports = [];
         }
 
-        return view('template/regimeForm', ['sports' => $sports]);
+        return view('template/admin/regime/form', ['sports' => $sports]);
     }
 
     public function list()
     {
         try {
-            $db = \Config\Database::connect();
-          
-            $builder = $db->table('diet d');
-            $builder->select([
-                'd.id AS diet_id',
-                'd.nom AS diet_nom',
-                'd.description AS diet_description',
-                'd.viande_percent',
-                'd.volaille_percent',
-                'd.poisson_percent',
-                'd.variation_poids_jour',
-                'd.id_sport',
-                's.id AS sport_id',
-                's.libelle AS sport_libelle',
-                's.variation_poids_seance',
-                'dp.prix AS prix_30',
-            ]);
-            $builder->join('sport s', 's.id = d.id_sport', 'left');
-
-            $builder->join('diet_prix dp', "dp.id_diet = d.id AND dp.duree = 30", 'left');
-            $regimes = $builder->get()->getResultArray();
+            $regimeModel = new \App\Models\RegimeModel();
+            $regimes = $regimeModel->getAdminRegimesList();
         } catch (\Throwable $e) {
             session()->setFlashdata('error', 'Impossible de lister les régimes : base de données inaccessible.');
             $regimes = [];
         }
 
-        return view('template/regimeList', ['regimes' => $regimes]);
+        return view('template/admin/regime/list', ['regimes' => $regimes]);
     }
 
 
 
     public function save()
     {
-        $db  = \Config\Database::connect();
+        $regimeModel = new \App\Models\RegimeModel();
         $nom = $this->request->getPost('nom');
 
-        if ($db->table('diet')->where('nom', $nom)->get()->getRow()) {
+        if ($regimeModel->existsByNom((string) $nom)) {
             return redirect()->back()->with('error', 'Ce régime existe déjà.');
         }
 
        
         $description = $this->request->getPost('description');
-        $variation_poids_jour = $this->request->getPost('variation_poids_jour');
+        $variation_poids_jour = $this->normalizeDecimal($this->request->getPost('variation_poids_jour'));
         $viande = (int)$this->request->getPost('viande_percent');
         $volaille = (int)$this->request->getPost('volaille_percent');
         $poisson = (int)$this->request->getPost('poisson_percent');
         $id_sport = $this->request->getPost('id_sport') ?: null;
+
+        if ($variation_poids_jour === null) {
+            return redirect()->back()->withInput()->with('error', 'La variation de poids doit être un nombre valide (ex: 0,10).');
+        }
 
         if (($viande + $volaille + $poisson) !== 100) {
             return redirect()->back()->withInput()->with('error', 'La somme des pourcentages doit être égale à 100%.');
@@ -83,29 +84,28 @@ class RegimeController extends BaseController
         if (!is_array($durees)) $durees = [$durees];
         if (!is_array($prixs))  $prixs  = [$prixs];
 
-        if (count($durees) !== count($prixs)) {
-            return redirect()->back()->withInput()->with('error', 'Incohérence entre durées et prix fournis.');
-        }
+       
+        $priceRows = [];
 
         // Valider chaque paire
         for ($i = 0; $i < count($durees)-1; $i++) {
             $rawD = $durees[$i];
             $rawP = $prixs[$i] ?? null;
             $d = intval($rawD);
-            $p = is_numeric($rawP) ? floatval($rawP) : null;
+            $p = $this->normalizeDecimal($rawP);
 
             if ($d <= 0) {
                 return redirect()->back()->withInput()->with('error', "Durée invalide à la ligne " . ($i+1) . ": \"" . $rawD . "\". Chaque durée doit être un entier positif.");
             }
-            if ($rawP === null || !is_numeric($rawP) || $p < 0) {
+            if ($rawP === null || $p === null || $p < 0) {
                 return redirect()->back()->withInput()->with('error', "Prix invalide à la ligne " . ($i+1) . ": \"" . ($rawP ?? '') . "\". Chaque prix doit être un nombre >= 0.");
             }
+
+            $priceRows[] = ['duree' => $d, 'prix' => $p];
         }
 
-        $db->transStart();
-
         try {
-            $db->table('diet')->insert([
+            $dietData = [
                 'nom'                 => $nom,
                 'description'         => $description,
                 'variation_poids_jour'=> $variation_poids_jour,
@@ -113,31 +113,16 @@ class RegimeController extends BaseController
                 'volaille_percent'    => $volaille,
                 'poisson_percent'     => $poisson,
                 'id_sport'            => $id_sport,
-            ]);
+            ];
 
-            $dietId = $db->insertID();
-
-         
-            for ($i = 0; $i < count($durees)-1; $i++) {
-                $d = intval($durees[$i]);
-                $p = floatval($prixs[$i]);
-                $db->table('diet_prix')->insert([
-                    'id_diet' => $dietId,
-                    'duree'   => $d,
-                    'prix'    => $p,
-                ]);
-            }
-
-            $db->transComplete();
-
-            if ($db->transStatus() === false) {
+            $dietId = $regimeModel->createWithPrices($dietData, $priceRows);
+            if ($dietId === false) {
                 return redirect()->back()->withInput()->with('error', 'Erreur lors de la sauvegarde en base.');
             }
 
             return redirect()->to('admin/regimes')->with('success', 'Régime créé avec succès !');
 
         } catch (\Exception $e) {
-            $db->transRollback();
             return redirect()->back()->withInput()->with('error', 'Erreur serveur : ' . $e->getMessage());
         }
     }
@@ -149,22 +134,26 @@ class RegimeController extends BaseController
             return redirect()->back()->with('error', 'Identifiant de régime invalide.');
         }
 
-        $db  = \Config\Database::connect();
+        $regimeModel  = new \App\Models\RegimeModel();
 
         $nom = $this->request->getPost('nom');
 
         
-        if ($db->table('diet')->where('nom', $nom)->where('id !=', $id)->get()->getRow()) {
+        if ($regimeModel->existsByNom((string) $nom, (int) $id)) {
             return redirect()->back()->withInput()->with('error', 'Ce régime existe déjà.');
         }
 
  
         $description = $this->request->getPost('description');
-        $variation_poids_jour = $this->request->getPost('variation_poids_jour');
+        $variation_poids_jour = $this->normalizeDecimal($this->request->getPost('variation_poids_jour'));
         $viande = (int)$this->request->getPost('viande_percent');
         $volaille = (int)$this->request->getPost('volaille_percent');
         $poisson = (int)$this->request->getPost('poisson_percent');
         $id_sport = $this->request->getPost('id_sport') ?: null;
+
+        if ($variation_poids_jour === null) {
+            return redirect()->back()->withInput()->with('error', 'La variation de poids doit être un nombre valide (ex: 0,10).');
+        }
 
         if (($viande + $volaille + $poisson) !== 100) {
             return redirect()->back()->withInput()->with('error', 'La somme des pourcentages doit être égale à 100%.');
@@ -178,28 +167,28 @@ class RegimeController extends BaseController
         if (!is_array($durees)) $durees = [$durees];
         if (!is_array($prixs))  $prixs  = [$prixs];
 
-        if (count($durees) !== count($prixs)) {
-            return redirect()->back()->withInput()->with('error', 'Incohérence entre durées et prix fournis.');
-        }
 
-        for ($i = 0; $i < count($durees) -1; $i++) {
+        $priceRows = [];
+
+        for ($i = 0; $i < count($durees)-1; $i++) {
             $rawD = $durees[$i];
             $rawP = $prixs[$i] ?? null;
             $d = intval($rawD);
-            $p = is_numeric($rawP) ? floatval($rawP) : null;
+            $p = $this->normalizeDecimal($rawP);
 
             if ($d <= 0) {
                 return redirect()->back()->withInput()->with('error', "Durée invalide à la ligne " . ($i+1) . ": \"" . $rawD . "\". Chaque durée doit être un entier positif.");
             }
-            if ($rawP === null || !is_numeric($rawP) || $p < 0) {
+            if ($rawP === null || $p === null || $p < 0) {
                 return redirect()->back()->withInput()->with('error', "Prix invalide à la ligne " . ($i+1) . ": \"" . ($rawP ?? '') . "\". Chaque prix doit être un nombre >= 0.");
             }
+
+            $priceRows[] = ['duree' => $d, 'prix' => $p];
         }
 
 
-        $db->transStart();
         try {
-            $db->table('diet')->where('id', $id)->update([
+            $dietData = [
                 'nom'                 => $nom,
                 'description'         => $description,
                 'variation_poids_jour'=> $variation_poids_jour,
@@ -207,31 +196,15 @@ class RegimeController extends BaseController
                 'volaille_percent'    => $volaille,
                 'poisson_percent'     => $poisson,
                 'id_sport'            => $id_sport,
-            ]);
+            ];
 
-  
-            $db->table('diet_prix')->where('id_diet', $id)->delete();
-
-            for ($i = 0; $i < count($durees)-1; $i++) {
-                $d = intval($durees[$i]);
-                $p = floatval($prixs[$i]);
-                $db->table('diet_prix')->insert([
-                    'id_diet' => $id,
-                    'duree'   => $d,
-                    'prix'    => $p,
-                ]);
-            }
-
-            $db->transComplete();
-
-            if ($db->transStatus() === false) {
+            if (!$regimeModel->updateWithPrices((int) $id, $dietData, $priceRows)) {
                 return redirect()->back()->withInput()->with('error', 'Erreur lors de la mise à jour en base.');
             }
 
             return redirect()->to('admin/regimes')->with('success', 'Régime mis à jour avec succès !');
 
         } catch (\Throwable $e) {
-            $db->transRollback();
             return redirect()->back()->withInput()->with('error', 'Erreur serveur : ' . $e->getMessage());
         }
     }
@@ -244,20 +217,21 @@ class RegimeController extends BaseController
         }
 
         try {
-            $db = \Config\Database::connect();
-            $diet = $db->table('diet')->where('id', $id)->get()->getRowArray();
+            $regimeModel = new \App\Models\RegimeModel();
+            $data = $regimeModel->getForEdit((int) $id);
+            $diet = $data['diet'] ?? null;
             if (!$diet) {
                 return redirect()->to('admin/regimes')->with('error', 'Régime introuvable.');
             }
 
-            $prixs = $db->table('diet_prix')->where('id_diet', $id)->orderBy('duree')->get()->getResultArray();
-            $sports = $db->table('sport')->get()->getResultArray();
+            $prixs = $data['prixs'];
+            $sports = $data['sports'];
         } catch (\Throwable $e) {
             session()->setFlashdata('error', 'Impossible de charger le régime : base de données inaccessible.');
             return redirect()->to('admin/regimes');
         }
 
-        return view('template/regimeForm', [
+        return view('template/admin/regime/form', [
             'diet' => $diet,
             'prixs' => $prixs,
             'sports' => $sports,
@@ -271,24 +245,16 @@ class RegimeController extends BaseController
             return redirect()->to('admin/regimes')->with('error', 'Identifiant de régime invalide.');
         }
 
-        $db = \Config\Database::connect();
+        $regimeModel = new \App\Models\RegimeModel();
 
         
-        $db->transStart();
         try {
-           
-            $db->table('diet_prix')->where('id_diet', $id)->delete();
-            $db->table('diet')->where('id', $id)->delete();
-
-            $db->transComplete();
-            if ($db->transStatus() === false) {
+            if (!$regimeModel->deleteWithPrices((int) $id)) {
                 return redirect()->to('admin/regimes')->with('error', 'Erreur lors de la suppression du régime.');
             }
 
             return redirect()->to('admin/regimes')->with('success', 'Régime supprimé avec succès !');
         } catch (\Throwable $e) {
-            $db->transRollback();
-            
             session()->setFlashdata('error', 'Impossible de supprimer ce régime : ' . $e->getMessage());
             return redirect()->to('admin/regimes');
         }

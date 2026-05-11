@@ -23,12 +23,15 @@
     <div class="form-header">
       <div class="tag">Admin</div>
       <h1>Codes Promo</h1>
-      <p>Liste de tous les codes promo créés.</p>
+      <p>Liste des codes promo et suivi des demandes utilisateurs.</p>
     </div>
 
-    <div style="margin-bottom:18px;">
+    <div style="margin-bottom:18px; display:flex; gap:10px; flex-wrap:wrap;">
       <a href="<?= base_url('admin/codepromo/create') ?>" class="btn-nav" style="background:#1a73e8; color:white; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-block;">
         <i class="bi bi-plus"></i> Nouveau code
+      </a>
+      <a href="<?= base_url('admin/codepromo/demandes') ?>" class="btn-nav" style="background:#2D6A4F; color:white; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-block;">
+        <i class="bi bi-list-check"></i> Voir les demandes
       </a>
     </div>
 
@@ -49,8 +52,9 @@
             <tr>
               <th style="padding:12px; text-align:left; font-weight:600;">Code</th>
               <th style="padding:12px; text-align:left; font-weight:600;">Montant</th>
-              <th style="padding:12px; text-align:left; font-weight:600;">Utilisé par</th>
-              <th style="padding:12px; text-align:left; font-weight:600;">Date d'utilisation</th>
+              <th style="padding:12px; text-align:left; font-weight:600;">Demandes</th>
+              <th style="padding:12px; text-align:left; font-weight:600;">Dernière demande</th>
+              <th style="padding:12px; text-align:left; font-weight:600;">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -58,19 +62,20 @@
               <tr style="border-bottom:1px solid #dee2e6;">
                 <td style="padding:12px; font-weight:600;"><?= esc($code['code']) ?></td>
                 <td style="padding:12px;"><?= number_format($code['montant'], 2) ?> €</td>
+                <td style="padding:12px;"><?= esc($code['total_demandes'] ?? 0) ?></td>
                 <td style="padding:12px;">
-                  <?php if ($code['id_user_utilise']): ?>
-                    <span style="background:#d4edda; color:#155724; padding:4px 8px; border-radius:4px; font-size:12px;">
-                      Utilisé
-                    </span>
-                  <?php else: ?>
-                    <span style="background:#e7e8ea; color:#6c757d; padding:4px 8px; border-radius:4px; font-size:12px;">
-                      Disponible
-                    </span>
-                  <?php endif; ?>
+                  <?= !empty($code['derniere_demande']) ? esc($code['derniere_demande']) : '—' ?>
                 </td>
                 <td style="padding:12px;">
-                  <?= $code['date_utilisation'] ? esc($code['date_utilisation']) : '—' ?>
+                  <?php
+                    $isPris = ($code['statut_pris'] ?? 'Non pris') === 'Pris';
+                    $bg = $isPris ? '#d4edda' : '#f8d7da';
+                    $color = $isPris ? '#155724' : '#721c24';
+                    $border = $isPris ? '#28a745' : '#f5c6cb';
+                  ?>
+                  <span style="display:inline-block; padding:4px 10px; border-radius:20px; background:<?= $bg ?>; border:1px solid <?= $border ?>; color:<?= $color ?>; font-size:12px; font-weight:600;">
+                    <?= esc($code['statut_pris'] ?? 'Non pris') ?>
+                  </span>
                 </td>
               </tr>
             <?php endforeach; ?>

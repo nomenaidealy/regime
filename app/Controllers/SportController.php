@@ -7,9 +7,24 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class SportController extends BaseController
 {
+    private function normalizeDecimal($value): ?float
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        $value = str_replace(',', '.', $value);
+        return is_numeric($value) ? (float) $value : null;
+    }
+
     public function form()
     {
-        return view('template/sportForm');
+        return view('template/admin/sport/form');
     }
 
 
@@ -19,18 +34,18 @@ class SportController extends BaseController
         $data = $this->request->getPost();
         $libelle = trim($data['libelle'] ?? '');
         $description = $data['description'] ?? '';
-        $variation_poids = $data['variation_poids_seance'] ?? '';
+        $variation_poids = $this->normalizeDecimal($data['variation_poids_seance'] ?? null);
 
         if ($libelle === '') {
             return redirect()->back()->withInput()->with('error', 'Le libellé est requis.');
         }
 
-        if ($variation_poids === '' || !is_numeric($variation_poids)) {
-            return redirect()->back()->withInput()->with('error', 'La variation de poids doit être un nombre.');
+        if ($variation_poids === null) {
+            return redirect()->back()->withInput()->with('error', 'La variation de poids doit être un nombre (ex: 0,05).');
         }
 
         // Prevent duplicate libelle
-        if ($sportModel->where('libelle', $libelle)->first()) {
+        if ($sportModel->existsByLibelle($libelle)) {
             return redirect()->back()->withInput()->with('error', 'Une activité avec ce libellé existe déjà.');
         }
 
@@ -47,7 +62,7 @@ class SportController extends BaseController
     {
         $sportModel = new \App\Models\SportModel();
         $sports = $sportModel->findAll();
-        return view('template/sportList', ['sports' => $sports]);
+        return view('template/admin/sport/list', ['sports' => $sports]);
     }
 
     public function update($id)
@@ -66,16 +81,20 @@ class SportController extends BaseController
         $data = $this->request->getPost();
         $libelle = trim($data['libelle'] ?? '');
         $description = $data['description'] ?? '';
-        $variation_poids = $data['variation_poids_seance'] ?? '';
+        $variation_poids = $this->normalizeDecimal($data['variation_poids_seance'] ?? null);
 
         if ($libelle === '') {
             return redirect()->back()->withInput()->with('error', 'Le libellé est requis.');
         }
 
+        if ($variation_poids === null) {
+            return redirect()->back()->withInput()->with('error', 'La variation de poids doit être un nombre (ex: 0,05).');
+        }
+
         $updateData = [
             'libelle' => $libelle,
             'description' => $description,
-            'variation_poids_seance' => (is_numeric($variation_poids) ? $variation_poids : null),
+            'variation_poids_seance' => $variation_poids,
         ];
 
         try {
@@ -102,7 +121,7 @@ class SportController extends BaseController
             return redirect()->to('/admin/sports')->with('error', 'Impossible de charger l\'activité : ' . $e->getMessage());
         }
 
-        return view('template/sportForm', ['sport' => $sport, 'mode' => 'edit']);
+        return view('template/admin/sport/form', ['sport' => $sport, 'mode' => 'edit']);
     }
 
     /**
@@ -115,18 +134,19 @@ class SportController extends BaseController
         }
 
         try {
-            $db = \Config\Database::connect();
-            $sport = $db->table('sport')->where('id', $id)->get()->getRowArray();
+            $sportModel = new \App\Models\SportModel();
+            $data = $sportModel->getForDeleteConfirmation((int) $id);
+            $sport = $data['sport'];
             if (!$sport) {
                 return redirect()->to('/admin/sports')->with('error', 'Activité introuvable.');
             }
 
-            $diets = $db->table('diet')->where('id_sport', $id)->get()->getResultArray();
+            $diets = $data['diets'];
         } catch (\Throwable $e) {
             return redirect()->to('/admin/sports')->with('error', 'Impossible d\'accéder à la base : ' . $e->getMessage());
         }
 
-        return view('template/sportDeleteConfirm', ['sport' => $sport, 'diets' => $diets]);
+        return view('template/admin/sport/deleteconfirm', ['sport' => $sport, 'diets' => $diets]);
     }
 
     /**
@@ -138,23 +158,14 @@ class SportController extends BaseController
             return redirect()->to('/admin/sports')->with('error', 'Identifiant invalide.');
         }
 
-        $db = \Config\Database::connect();
-        $db->transStart();
         try {
-            // Delete diets that reference this sport. Diet deletion will cascade to diet_prix (ON DELETE CASCADE)
-            $db->table('diet')->where('id_sport', $id)->delete();
-
-            // Now delete the sport itself
-            $db->table('sport')->where('id', $id)->delete();
-
-            $db->transComplete();
-            if ($db->transStatus() === false) {
+            $sportModel = new \App\Models\SportModel();
+            if (!$sportModel->deleteSportWithDiets((int) $id)) {
                 return redirect()->to('/admin/sports')->with('error', 'Erreur lors de la suppression.');
             }
 
             return redirect()->to('/admin/sports')->with('success', 'Activité sportive et éléments liés supprimés.');
         } catch (\Throwable $e) {
-            $db->transRollback();
             return redirect()->to('/admin/sports')->with('error', 'Impossible de supprimer l\'activité : ' . $e->getMessage());
         }
     }
@@ -168,34 +179,14 @@ class SportController extends BaseController
             return redirect()->to('/admin/sports')->with('error', 'Identifiant invalide.');
         }
 
-        $db = \Config\Database::connect();
-        $db->transStart();
         try {
-            $sport = $db->table('sport')->where('id', $id)->get()->getRowArray();
-            if (!$sport) {
-                return redirect()->to('/admin/sports')->with('error', 'Activité introuvable.');
-            }
-
-            $adj = 0;
-            if (isset($sport['variation_poids_seance']) && is_numeric($sport['variation_poids_seance'])) {
-                $adj = floatval($sport['variation_poids_seance']);
-            }
-
-            // Subtract sport variation from diets' variation_poids_jour and set id_sport to NULL
-            // Use a bound query to avoid SQL injection and preserve decimals
-            $db->query('UPDATE diet SET variation_poids_jour = variation_poids_jour - ?, id_sport = NULL WHERE id_sport = ?', [$adj, $id]);
-
-            // Delete sport record
-            $db->table('sport')->where('id', $id)->delete();
-
-            $db->transComplete();
-            if ($db->transStatus() === false) {
+            $sportModel = new \App\Models\SportModel();
+            if (!$sportModel->removeKeepDiets((int) $id)) {
                 return redirect()->to('/admin/sports')->with('error', 'Erreur lors de la suppression.');
             }
 
             return redirect()->to('/admin/sports')->with('success', 'Activité supprimée. Les régimes liés ont été conservés et ajustés.');
         } catch (\Throwable $e) {
-            $db->transRollback();
             return redirect()->to('/admin/sports')->with('error', 'Impossible de supprimer l\'activité : ' . $e->getMessage());
         }
     }
@@ -206,24 +197,14 @@ class SportController extends BaseController
             return redirect()->to('/admin/sports')->with('error', 'Identifiant invalide.');
         }
 
-        $db = \Config\Database::connect();
-
-        $db->transStart();
         try {
-            // Delete diets that reference this sport. Diet deletion will cascade to diet_prix (ON DELETE CASCADE)
-            $db->table('diet')->where('id_sport', $id)->delete();
-
-            // Now delete the sport itself
-            $db->table('sport')->where('id', $id)->delete();
-
-            $db->transComplete();
-            if ($db->transStatus() === false) {
+            $sportModel = new \App\Models\SportModel();
+            if (!$sportModel->deleteSportWithDiets((int) $id)) {
                 return redirect()->to('/admin/sports')->with('error', 'Erreur lors de la suppression.');
             }
 
             return redirect()->to('/admin/sports')->with('success', 'Activité sportive et éléments liés supprimés.');
         } catch (\Throwable $e) {
-            $db->transRollback();
             return redirect()->to('/admin/sports')->with('error', 'Impossible de supprimer l\'activité : ' . $e->getMessage());
         }
     }

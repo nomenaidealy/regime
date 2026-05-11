@@ -28,8 +28,8 @@ class Database extends Config
         'DSN'          => '',
         // Use 127.0.0.1 to force TCP (avoids socket "No such file or directory" errors)
         'hostname'     => '127.0.0.1',
-        'username'     => 'tomefy',
-        'password'     => 'etu003948',
+        'username'     => 'root',
+        'password'     => '',
         'database'     => 'diet',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',

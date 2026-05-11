@@ -3,47 +3,40 @@
 namespace App\Controllers;
 
 use App\Models\CodePromoModel;
+use App\Models\DemandeCodePromoModel;
+use App\Models\NotificationAdminModel;
+use App\Models\MouvementModel;
 use CodeIgniter\Controller;
 
 class CodePromoController extends Controller
 {
-    protected $codePromoModel;
+    protected CodePromoModel          $codePromoModel;
+    protected DemandeCodePromoModel   $demandeModel;
+    protected NotificationAdminModel  $notifModel;
     protected $session;
 
     public function __construct()
     {
         $this->codePromoModel = new CodePromoModel();
-        $this->session = session();
+        $this->demandeModel   = new DemandeCodePromoModel();
+        $this->notifModel     = new NotificationAdminModel();
+        $this->session        = session();
     }
 
-    // ────────────────────────────────────────
-    // DISPLAY CODE PROMO FORM
-    // ────────────────────────────────────────
-
-    /**
-     * Affiche la page de saisie du code promo
-     */
+  
     public function form()
     {
-        $userId = $this->session->get('user_id');
-
-        if (!$userId) {
+        if (!$this->session->get('user_id')) {
             return redirect()->to('login')->with('error', 'Vous devez être connecté');
         }
 
-        return view('template/codePromoForm');
+        return view('template/user/codepromo/form');
     }
 
-    // ────────────────────────────────────────
-    // REDEEM CODE PROMO
-    // ────────────────────────────────────────
-
-    /**
-     * Traite la saisie du code promo et crédite le compte
-     */
+  
     public function redeem()
     {
-        $userId = $this->session->get('user_id');
+        $userId = (int) $this->session->get('user_id');
 
         if (!$userId) {
             return redirect()->to('login')->with('error', 'Vous devez être connecté');
@@ -52,102 +45,267 @@ class CodePromoController extends Controller
         if (!$this->request->isAJAX()) {
             return $this->response->setStatusCode(403)->setJSON([
                 'success' => false,
-                'message' => 'Accès non autorisé'
+                'message' => 'Accès non autorisé',
             ]);
         }
 
-        $code = strtoupper(trim($this->request->getPost('code')));
+        $code = strtoupper(trim($this->request->getPost('code') ?? ''));
 
         if (empty($code)) {
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'Veuillez saisir un code promo'
+                'message' => 'Veuillez saisir un code promo',
             ]);
         }
 
-        // Utiliser le code promo
-        $result = $this->codePromoModel->useCodeAndCredit($code, $userId);
+        // 1. Vérifier la disponibilité du code
+        $codeData = $this->codePromoModel->getAvailableCode($code, $userId);
 
-        if (!$result['success']) {
+        if (!$codeData) {
             return $this->response->setJSON([
                 'success' => false,
-                'message' => $result['message']
+                'message' => 'Code invalide, déjà utilisé ou en attente de validation.',
             ]);
         }
 
-        // Mettre à jour la session si nécessaire (pour le solde)
-        // On pourrait le refaire ici mais c'est optionnel
+        // 2. Récupérer le nom de l'utilisateur
+        $db       = \Config\Database::connect();
+        $user     = $db->table('users')->where('id', $userId)->get()->getRow();
+        $userName = $user ? $user->nom : "Utilisateur #{$userId}";
+
+        // 3. Créer la demande EN_ATTENTE
+        $demandeId = $this->demandeModel->creerDemande($userId, $codeData['id']);
+
+        if (!$demandeId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Erreur lors de la soumission de la demande.',
+            ]);
+        }
+
+        // 4. Créer la notification admin
+        $this->notifModel->creerNotification(
+            $demandeId,
+            "{$userName} a soumis le code {$code} ({$codeData['montant']})",
+            'CODE_PROMO'              // type explicite
+        );
 
         return $this->response->setJSON([
             'success' => true,
-            'message' => $result['message'],
-            'montant' => $result['montant']
+            'message' => 'Demande soumise. Un administrateur va la traiter prochainement.',
         ]);
     }
 
     // ────────────────────────────────────────
-    // ADMIN SECTION: CREATE CODE PROMO
+    // ADMIN — Créer un code promo
     // ────────────────────────────────────────
 
-    /**
-     * Affiche la page de création d'un code promo (admin)
-     */
     public function adminForm()
     {
-        // Vérifier si admin
         if (!$this->session->get('is_admin')) {
             return redirect()->to('/')->with('error', 'Accès administrateur requis');
         }
 
-        return view('template/codePromoAdminForm');
+        return view('template/admin/codepromo/form');
     }
 
-    /**
-     * Crée un nouveau code promo (admin)
-     */
     public function adminCreate()
     {
-        // Vérifier si admin
         if (!$this->session->get('is_admin')) {
             return redirect()->to('/')->with('error', 'Accès administrateur requis');
         }
 
-        $code = strtoupper(trim($this->request->getPost('code')));
-        $montant = $this->request->getPost('montant');
-
         $data = [
-            'code' => $code,
-            'montant' => $montant
+            'code'    => strtoupper(trim($this->request->getPost('code') ?? '')),
+            'montant' => $this->request->getPost('montant'),
         ];
 
-        if ($this->codePromoModel->validate($data)) {
-            if ($this->codePromoModel->save($data)) {
-                return redirect()->to('admin/codepromo/list')->with(
-                    'success',
-                    "Code promo '{$code}' créé avec succès"
-                );
-            }
+        if (!$this->codePromoModel->validate($data)) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Erreur de validation')
+                ->with('errors', $this->codePromoModel->errors());
+        }
+
+        if ($this->codePromoModel->save($data)) {
+            return redirect()->to('/admin/codepromo/list')
+                ->with('success', "Code '{$data['code']}' créé avec succès");
         }
 
         return redirect()->back()->withInput()
-            ->with('error', 'Erreur lors de la création du code promo')
-            ->with('errors', $this->codePromoModel->errors());
+            ->with('error', 'Erreur lors de la création du code promo');
     }
 
-    /**
-     * Liste tous les codes promo (admin)
-     */
     public function adminList()
     {
-        // Vérifier si admin
         if (!$this->session->get('is_admin')) {
             return redirect()->to('/')->with('error', 'Accès administrateur requis');
         }
 
-        $codes = $this->codePromoModel->findAll();
-
-        return view('template/codePromoAdminList', [
-            'codes' => $codes
+        return view('template/admin/codepromo/list', [
+            'codes' => $this->codePromoModel->getAllWithDemandStats(),
         ]);
     }
+  
+
+    public function mesDemandes()
+    {
+        $userId = (int) $this->session->get('user_id');
+
+        if (!$userId || !$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false, 'message' => 'Accès non autorisé',
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'data'    => $this->demandeModel->getByUser($userId),
+        ]);
+    }
+        // ────────────────────────────────────────
+    // ADMIN — Liste des demandes
+    // ────────────────────────────────────────
+
+    public function adminDemandes()
+    {
+        if (!$this->session->get('is_admin')) {
+            return redirect()->to('/')->with('error', 'Accès administrateur requis');
+        }
+
+        $statut = $this->request->getGet('statut') ?? null;
+
+        return view('template/admin/codepromo/demandes', [
+            'demandes' => $this->demandeModel->getAllWithDetails($statut),
+            'statut'   => $statut,
+        ]);
+    }
+
+    // ────────────────────────────────────────
+    // ADMIN — Valider une demande (AJAX)
+    // ────────────────────────────────────────
+
+    public function adminValider()
+    {
+        if (!$this->session->get('is_admin') || !$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'message' => 'Accès non autorisé',
+            ]);
+        }
+
+        $demandeId = (int) $this->request->getPost('demande_id');
+        $adminId   = (int) $this->session->get('admin_id');
+
+        if (!$demandeId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'ID de demande manquant',
+            ]);
+        }
+
+        // 1. Récupérer la demande EN_ATTENTE
+        $demande = $this->demandeModel->getEnAttente($demandeId);
+
+        if (!$demande) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Demande introuvable ou déjà traitée.',
+            ]);
+        }
+
+        $codeData = $this->codePromoModel->find($demande['id_code_promo']);
+
+        if (!$codeData) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Code promo associé introuvable.',
+            ]);
+        }
+
+        // 2. Créditer le solde via MouvementModel
+        $db          = \Config\Database::connect();
+        $lastMvt     = $db->table('mouvement')
+            ->where('id_user', $demande['id_user'])
+            ->orderBy('date_mouvement', 'DESC')
+            ->limit(1)->get()->getRow();
+
+        $currentBalance = $lastMvt ? (float) $lastMvt->montant_apres : 0.0;
+        $newBalance     = $currentBalance + (float) $codeData['montant'];
+
+        $mouvementModel = new MouvementModel();
+        $credited = $mouvementModel->addCredit(
+            $demande['id_user'],
+            (float) $codeData['montant'],
+            $newBalance,
+            "Code promo {$codeData['code']} validé par admin"
+        );
+
+        if (!$credited) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Erreur lors du crédit du solde.',
+            ]);
+        }
+
+        // 3. Marquer la demande comme VALIDÉE
+        $this->demandeModel->marquerValide($demandeId, $adminId);
+
+        // 4. Marquer la notification comme lue
+        $this->notifModel->marquerLue($demandeId, 'CODE_PROMO');
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => "Demande validée. {$codeData['montant']} crédités.",
+            'montant' => (float) $codeData['montant'],
+        ]);
+    }
+
+    // ────────────────────────────────────────
+    // ADMIN — Rejeter une demande (AJAX)
+    // ────────────────────────────────────────
+
+    public function adminRejeter()
+    {
+        if (!$this->session->get('is_admin') || !$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'message' => 'Accès non autorisé',
+            ]);
+        }
+
+        $demandeId = (int) $this->request->getPost('demande_id');
+        $adminId   = (int) $this->session->get('admin_id');
+        $motif     = trim($this->request->getPost('motif') ?? '');
+
+        if (!$demandeId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'ID de demande manquant',
+            ]);
+        }
+
+        $demande = $this->demandeModel->getEnAttente($demandeId);
+
+        if (!$demande) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Demande introuvable ou déjà traitée.',
+            ]);
+        }
+
+        // Marquer rejetée + notif lue
+        $this->demandeModel->marquerRejete($demandeId, $adminId, $motif);
+        $this->notifModel->marquerLue($demandeId, 'CODE_PROMO');
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Demande rejetée avec succès.',
+        ]);
+    }
+
+    // ────────────────────────────────────────
+    // ADMIN — Notifications non lues (AJAX)
+    // ────────────────────────────────────────
+
+
 }

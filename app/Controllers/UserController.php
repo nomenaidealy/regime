@@ -6,6 +6,7 @@ use App\Models\UserModel;
 use App\Models\UserObjectifModel;
 use App\Models\CodePromoModel;
 use App\Models\MouvementModel;
+use App\Models\UserExportModel;
 use CodeIgniter\Controller;
 
 
@@ -16,7 +17,7 @@ class UserController extends Controller
     // ─────────────────────────────────────────
     public function inscription()
     {
-        return view('template/inscription');
+        return view('template/user/inscription');
     }
 
     protected $userModel;
@@ -32,150 +33,7 @@ class UserController extends Controller
         $this->mouvementModel= new MouvementModel();
     }
 
-    // =========================
-    // INSCRIPTION - WIZARD AJAX
-    // =========================
-
-    /**
-     * Endpoint AJAX - Valide l'étape 1 du wizard (infos personnelles)
-     */
-    public function validateStep1()
-    {
-        if (!$this->request->isAJAX()) {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
-        }
-
-        $data = [
-            'nom'   => $this->request->getPost('nom'),
-            'email' => $this->request->getPost('email'),
-            'genre' => $this->request->getPost('genre'),
-        ];
-
-        $result = $this->userModel->validateStep1($data);
-
-        if ($result['valid']) {
-            // Sauvegarder en session
-            session()->set('inscription_step1', $data);
-            return $this->response->setJSON(['success' => true]);
-        }
-
-        return $this->response->setJSON(['success' => false, 'errors' => $result['errors']]);
-    }
-
-    /**
-     * Endpoint AJAX - Valide l'étape 2 du wizard (infos santé)
-     */
-    public function validateStep2()
-    {
-        if (!$this->request->isAJAX()) {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
-        }
-
-        $data = [
-            'taille'  => $this->request->getPost('taille'),
-            'poids'   => $this->request->getPost('poids'),
-            'objectif' => $this->request->getPost('objectif'),
-        ];
-
-        $result = $this->userModel->validateStep2($data);
-
-        if ($result['valid']) {
-            // Sauvegarder en session
-            session()->set('inscription_step2', $data);
-            return $this->response->setJSON(['success' => true]);
-        }
-
-        return $this->response->setJSON(['success' => false, 'errors' => $result['errors']]);
-    }
-
-    /**
-     * Endpoint AJAX - Valide l'étape 3 du wizard (sécurité)
-     */
-    public function validateStep3()
-    {
-        if (!$this->request->isAJAX()) {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
-        }
-
-        $data = [
-            'mdp'          => $this->request->getPost('mdp'),
-            'mdp_confirm'  => $this->request->getPost('mdp_confirm'),
-        ];
-
-        $result = $this->userModel->validateStep3($data);
-
-        if ($result['valid']) {
-            // Sauvegarder en session
-            session()->set('inscription_step3', $data);
-            return $this->response->setJSON(['success' => true]);
-        }
-
-        return $this->response->setJSON(['success' => false, 'errors' => $result['errors']]);
-    }
-
-    /**
-     * Endpoint AJAX - Finalise l'inscription (création de l'utilisateur)
-     */
-    public function completeInscription()
-    {
-        if (!$this->request->isAJAX()) {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Accès non autorisé']);
-        }
-
-        // Récupérer les données sauvegardées en session, ou fallback aux POST si session manquante
-        $step1Data = session()->get('inscription_step1') ?? [];
-        $step2Data = session()->get('inscription_step2') ?? [];
-        $step3Data = session()->get('inscription_step3') ?? [];
-
-        // Fallback vers POST si les sessions sont absentes (robuste pour appels directs)
-        $step1Data['nom']   = $step1Data['nom']   ?? $this->request->getPost('nom');
-        $step1Data['email'] = $step1Data['email'] ?? $this->request->getPost('email');
-        $step1Data['genre'] = $step1Data['genre'] ?? $this->request->getPost('genre');
-
-        $step2Data['taille']   = $step2Data['taille']   ?? $this->request->getPost('taille');
-        $step2Data['poids']    = $step2Data['poids']    ?? $this->request->getPost('poids');
-        $step2Data['objectif'] = $step2Data['objectif'] ?? $this->request->getPost('objectif');
-
-        $step3Data['mdp'] = $step3Data['mdp'] ?? $this->request->getPost('mdp');
-
-        // Fusionner toutes les données
-        $data = array_merge($step1Data, $step2Data, [
-            'mdp' => $step3Data['mdp'] ?? '',
-        ]);
-
-        // Crée l'utilisateur
-        $userId = $this->userModel->createUser($data);
-
-        if (!$userId) {
-            // Récupérer erreurs du modèle si disponibles
-            $errors = $this->userModel->errors();
-            $msg = 'Erreur lors de la création';
-            if (!empty($errors)) {
-                $msg = implode(' | ', $errors);
-            }
-            return $this->response->setJSON(['success' => false, 'message' => $msg]);
-        }
-
-        // Ajoute l'objectif
-        $this->objectifModel->insertObjectif(
-            $userId,
-            $step2Data['objectif'] ?? null,
-            $this->request->getPost('valeur_objectif')
-        );
-
-        // Crée la session
-        session()->set([
-            'user_id'    => $userId,
-            'user_nom'   => $data['nom'],
-            'isLoggedIn' => true
-        ]);
-
-        // Nettoyer les données temporaires
-        session()->remove(['inscription_step1', 'inscription_step2', 'inscription_step3']);
-
-        return $this->response->setJSON(['success' => true, 'redirect' => '/dashboard']);
-    }
-
+    // (suppression des méthodes d'inscription par étapes)
     /**
      * (Ancien endpoint - conservation pour compatibilité temporaire)
      */
@@ -229,54 +87,18 @@ class UserController extends Controller
         $email     = $this->request->getPost('email');
         $mdp       = $this->request->getPost('mdp');
 
-        $db = \Config\Database::connect();
-
-        // Check admin table first (admin.login stores the admin identifier)
-        $adminRow = $db->table('admin')->where('login', $email)->get()->getRowArray();
-        if ($adminRow) {
-            // Admin password may be stored hashed or plain; try password_verify first then plain compare
-            $stored = $adminRow['mdp'] ?? '';
-            $ok = false;
-            if ($stored && password_verify($mdp, $stored)) {
-                $ok = true;
-            } elseif ($stored === $mdp) {
-                $ok = true;
-            }
-
-            if ($ok) {
-                // Set admin session
-                session()->set([
-                    'isLoggedIn' => true,
-                    'is_admin'   => true,
-                    'admin_login'=> $adminRow['login'],
-                ]);
-                return redirect()->to('/admin/dashboard')->with('success', 'Bienvenue, administrateur.');
-            }
-
-            return redirect()->to('login')->with('login_error', 'Identifiants administrateur invalides.');
-        }
-
-        // Not admin — normal user flow
         $result = $userModel->verifyUser($email, $mdp);
         if (!$result['success']) {
             return redirect()->to('login')->with('login_error', $result['message']);
         }
         $user = $result['user'];
 
-        // Vérifier si Gold
-        $isGold = $db->table('user_gold_at_time')
-            ->where('id_user', $user['id'])
-            ->countAllResults() > 0;
+        session()->remove(['is_admin', 'admin_id', 'admin_login']);
 
-        // Calculer solde
-        $dernierMouvement = $db->table('mouvement')
-            ->where('id_user', $user['id'])
-            ->orderBy('date_mouvement', 'DESC')
-            ->limit(1)
-            ->get()->getRow();
-        $solde = $dernierMouvement ? (float)$dernierMouvement->montant_apres : 0.00;
+        // Déléguer vérifs au modèle
+        $isGold = $userModel->isGold((int)$user['id']);
+        $solde = $userModel->getSoldeActuelle((int)$user['id']);
 
-        // Créer session
         session()->set([
             'isLoggedIn' => true,
             'user_id'    => $user['id'],
@@ -287,60 +109,89 @@ class UserController extends Controller
             'solde'      => $solde,
         ]);
 
-        return redirect()->to('/dashboard')->with('success', 'Bon retour, ' . $user['nom'] . ' !');
+        return redirect()->to('/user/mes-regimes')->with('success', 'Bon retour, ' . $user['nom'] . ' !');
     }
 
     /**
-     * User dashboard: show IMC, current objectif, solde and active subscriptions
+     * Ancien dashboard conservé pour compatibilité : redirige vers Mes régimes.
      */
     public function dashboard()
     {
+        return redirect()->to('/user/mes-regimes');
+    }
+
+    /**
+     * Page Mes régimes : suggestions de régimes + abonnements de l'utilisateur
+     */
+    public function mesRegimes()
+    {
         $userId = session()->get('user_id');
         if (!$userId) {
-            return redirect()->to('login')->with('error', 'Connectez-vous pour voir le tableau de bord.');
+            return redirect()->to('login')->with('error', 'Connectez-vous pour voir vos régimes.');
         }
+        // déléguer la logique métier au modèle
+        $userModel = new UserModel();
+        $data = $userModel->getMesRegimesData($userId);
+        if (empty($data)) return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
+
+        return view('template/user/regime/list', $data);
+    }
+
+    /**
+     * Détails d'une suggestion de régime
+     */
+    public function regimeDetails($id)
+    {
+        $userId = session()->get('user_id');
+        if (!$userId) return redirect()->to('login')->with('error', 'Connectez-vous pour voir les détails.');
+
+        if (!$id || !is_numeric($id)) {
+            return redirect()->to('/user/mes-regimes')->with('error', 'Régime introuvable.');
+        }
+
+        // récupérer info utilisateur / objectif
+        $userModel = new UserModel();
+        $user = $userModel->find($userId);
+        if (!$user) return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
+
+        $objectifModel = new \App\Models\ObjectifModel();
+        $objectif = $objectifModel->getLatestForUser($userId);
+
+        $regimeModel = new \App\Models\RegimeModel();
+        $details = $regimeModel->getRegimeDetailsForUser((int)$id, (float)$user['poids'], (float)$user['taille'], $objectif);
+
+        if (empty($details)) return redirect()->to('/user/mes-regimes')->with('error', 'Régime introuvable.');
+
+        return view('template/user/regime/detail', [
+            'regime' => $details['regime'],
+            'prixs' => $details['prixs'],
+            'jours_estimes' => $details['jours_estimes'],
+            'possible' => $details['possible'],
+        ]);
+    }
+
+    /**
+     * Endpoint POST : souscrire à un régime (faire ce régime)
+     */
+    public function souscrire($dietId)
+    {
+        $userId = session()->get('user_id');
+        if (!$userId) return redirect()->to('login')->with('error', 'Connectez-vous pour souscrire.');
+
+        if (!$dietId || !is_numeric($dietId)) {
+            return redirect()->to('user/mes-regimes')->with('error', 'Régime invalide.');
+        }
+
+        $prixId = $this->request->getPost('prix_id') ? (int)$this->request->getPost('prix_id') : null;
+        $nombreJours = $this->request->getPost('nombre_jour') ? (int)$this->request->getPost('nombre_jour') : null;
 
         $userModel = new UserModel();
-        $db = \Config\Database::connect();
+        $result = $userModel->subscribeToRegime((int)$userId, (int)$dietId, $prixId, $nombreJours);
 
-        $user = $userModel->find($userId);
-        if (!$user) {
-            return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
+        if ($result['success']) {
+            return redirect()->to('user/mes-regimes')->with('success', $result['message']);
         }
-
-        $imc = round($user['poids'] / ($user['taille'] * $user['taille']), 1);
-
-        $objectif = $db->table('user_objectif uo')
-            ->join('objectif o', 'o.id = uo.id_objectif')
-            ->where('uo.id_user', $userId)
-            ->orderBy('uo.date_choix', 'DESC')
-            ->limit(1)
-            ->get()->getRow();
-
-        // Solde
-        $solde = $userModel->getSoldeActuelle($userId);
-
-        $isGold = $db->table('user_gold_at_time')
-            ->where('id_user', $userId)
-            ->countAllResults() > 0;
-
-        // Subscriptions
-        $subscriptions = $db->table('user_diet ud')
-            ->select('ud.*, dp.duree, dp.prix, d.nom AS diet_nom')
-            ->join('diet_prix dp', 'dp.id = ud.id_diet_prix')
-            ->join('diet d', 'd.id = dp.id_diet')
-            ->where('ud.id_user', $userId)
-            ->orderBy('ud.date_debut', 'DESC')
-            ->get()->getResultArray();
-
-        return view('template/userDashboard', [
-            'user' => $user,
-            'imc' => $imc,
-            'objectif' => $objectif,
-            'solde' => $solde,
-            'isGold' => $isGold,
-            'subscriptions' => $subscriptions,
-        ]);
+        return redirect()->to('user/mes-regimes')->with('error', $result['message']);
     }
 
     // ─────────────────────────────────────────
@@ -358,39 +209,38 @@ class UserController extends Controller
     // ─────────────────────────────────────────
     public function profil()
     {
-        $userId    = session()->get('user_id');
+        $userId = session()->get('user_id');
+        if (!$userId) return redirect()->to('login')->with('error', 'Connectez-vous pour voir votre profil.');
+
         $userModel = new UserModel();
-        $db        = \Config\Database::connect();
+        $data = $userModel->getProfilData($userId);
+        if (empty($data)) return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
 
-        $user = $userModel->find($userId);
+        return view('template/user/profil', $data);
+    }
 
-        // IMC
-        $imc = round($user['poids'] / ($user['taille'] * $user['taille']), 1);
+    /**
+     * Exporter la liste des suggestions et abonnements en PDF
+     */
+    public function exportMesRegimes()
+    {
+        $userId = session()->get('user_id');
+        if (!$userId) return redirect()->to('login')->with('error', 'Connectez-vous pour exporter.');
 
-        // Objectif actuel
-        $objectif = $db->table('user_objectif uo')
-            ->join('objectif o', 'o.id = uo.id_objectif')
-            ->where('uo.id_user', $userId)
-            ->orderBy('uo.date_choix', 'DESC')
-            ->limit(1)
-            ->get()->getRow();
+        $userModel = new UserModel();
+        $data = $userModel->getMesRegimesData($userId);
+        if (empty($data)) return redirect()->to('/user/mes-regimes')->with('error', 'Aucune donnée à exporter.');
 
-        // Solde
-        // Solde
-        $solde = $userModel->getSoldeActuelle($userId);
+        $user = $data['user'] ?? ['nom' => 'Utilisateur'];
+        $suggestions = $data['suggestions'] ?? [];
+        $subscriptions = $data['subscriptions'] ?? [];
 
-        // Gold ?
-        $isGold = $db->table('user_gold_at_time')
-            ->where('id_user', $userId)
-            ->countAllResults() > 0;
+        $exportModel = new UserExportModel();
+        $pdf = $exportModel->generatePdf($user, $suggestions, $subscriptions);
 
-        return view('profil', [
-            'user'     => $user,
-            'imc'      => $imc,
-            'objectif' => $objectif,
-            'solde'    => $solde,
-            'isGold'   => $isGold,
-        ]);
+        return $this->response->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="mes-regimes.pdf"')
+            ->setBody($pdf);
     }
 
 }

@@ -38,15 +38,7 @@ class UserModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
-    // ─────────────────────────────────────────
-    // WIZARD INSCRIPTION - VALIDATION PAR ÉTAPES
-    // ─────────────────────────────────────────
 
-    /**
-     * Valide l'étape 1 du wizard: infos personnelles
-     * @param array $data Contient: nom, email, genre
-     * @return array ['valid' => bool, 'errors' => array]
-     */
     public function validateStep1($data)
     {
         $rules = [
@@ -79,7 +71,7 @@ class UserModel extends Model
             ];
         }
 
-        return ['valid' => true];
+        return ['valid' => true, 'errors' => []];
     }
 
     /**
@@ -98,8 +90,8 @@ class UserModel extends Model
         ];
 
         $messages = [
-            'taille'  => ['required' => 'La taille est obligatoire', 'numeric' => 'Valeur numérique requise'],
-            'poids'   => ['required' => 'Le poids est obligatoire', 'numeric' => 'Valeur numérique requise'],
+            'taille'  => ['required' => 'La taille est obligatoire', 'numeric' => 'Valeur numérique requise', 'greater_than' => 'La taille doit être supérieure à 0'],
+            'poids'   => ['required' => 'Le poids est obligatoire', 'numeric' => 'Valeur numérique requise', 'greater_than' => 'Le poids doit être supérieur à 0'],
             'objectif' => ['required' => 'L\'objectif est obligatoire', 'is_natural_no_zero' => 'Objectif invalide'],
         ];
 
@@ -113,7 +105,7 @@ class UserModel extends Model
             ];
         }
 
-        return ['valid' => true];
+        return ['valid' => true, 'errors' => []];
     }
 
     /**
@@ -143,7 +135,7 @@ class UserModel extends Model
             ];
         }
 
-        return ['valid' => true];
+        return ['valid' => true, 'errors' => []];
     }
 
     /**
@@ -159,7 +151,7 @@ class UserModel extends Model
             'genre'  => $data['genre'],
             'taille' => $data['taille'],
             'poids'  => $data['poids'],
-            'mdp'    => password_hash($data['mdp'], PASSWORD_DEFAULT)
+            'mdp'    => $data['mdp']
         ];
 
         if ($this->insert($userData)) {
@@ -224,5 +216,199 @@ class UserModel extends Model
     public function getSoldeActuelle(int $userId): float
     {
         return $this->getSolde($userId);
+    }
+
+    /**
+     * Rassemble les données nécessaires pour la page "Mes régimes" pour un utilisateur
+     * @param int $userId
+     * @return array
+     */
+    public function getMesRegimesData(int $userId): array
+    {
+        $db = \Config\Database::connect();
+
+        $user = $this->find($userId);
+        if (!$user) return [];
+
+        $imc = round($user['poids'] / ($user['taille'] * $user['taille']), 1);
+
+        $objectifModel = new \App\Models\ObjectifModel();
+        $objectif = $objectifModel->getLatestForUser($userId);
+
+        $solde = $this->getSoldeActuelle($userId);
+
+        $isGold = $db->table('user_gold_at_time')->where('id_user', $userId)->countAllResults() > 0;
+
+        // Suggestions via RegimeModel
+        $regimeModel = new \App\Models\RegimeModel();
+        $suggestions = $regimeModel->getSuggestionsForUser((float)$user['poids'], (float)$user['taille'], $objectif);
+
+        // Abonnements
+        $subscriptions = $db->table('user_diet ud')
+            ->select('ud.*, dp.duree, dp.prix, d.nom AS diet_nom')
+            ->join('diet_prix dp', 'dp.id = ud.id_diet_prix')
+            ->join('diet d', 'd.id = dp.id_diet')
+            ->where('ud.id_user', $userId)
+            ->orderBy('ud.date_debut', 'DESC')
+            ->get()->getResultArray();
+
+        return [
+            'user' => $user,
+            'imc' => $imc,
+            'objectif' => $objectif,
+            'solde' => $solde,
+            'isGold' => $isGold,
+            'suggestions' => $suggestions,
+            'subscriptions' => $subscriptions,
+        ];
+    }
+
+   
+    public function getProfilData(int $userId): array
+    {
+        $db = \Config\Database::connect();
+
+        $user = $this->find($userId);
+        if (!$user) return [];
+
+        $imc = round($user['poids'] / ($user['taille'] * $user['taille']), 1);
+
+        $objectifModel = new \App\Models\ObjectifModel();
+        $objectif = $objectifModel->getLatestForUser($userId);
+
+        $solde = $this->getSoldeActuelle($userId);
+
+        $isGold = $db->table('user_gold_at_time')->where('id_user', $userId)->countAllResults() > 0;
+
+        // dernier régime souscrit
+        $regimeActuel = $db->table('user_diet ud')
+            ->select('ud.date_debut, ud.prix_paye, ud.remise_gold, dp.duree, dp.prix, d.nom AS diet_nom, d.description AS diet_description')
+            ->join('diet_prix dp', 'dp.id = ud.id_diet_prix')
+            ->join('diet d', 'd.id = dp.id_diet')
+            ->where('ud.id_user', $userId)
+            ->orderBy('ud.date_debut', 'DESC')
+            ->limit(1)
+            ->get()->getRow();
+
+        return [
+            'user' => $user,
+            'imc' => $imc,
+            'objectif' => $objectif,
+            'solde' => $solde,
+            'isGold' => $isGold,
+            'regimeActuel' => $regimeActuel,
+        ];
+    }
+
+  
+    public function subscribeToRegime(int $userId, int $dietId, ?int $prixId = null, ?int $nombreJours = null, int $dureeDefault = 30): array
+    {
+        $db = \Config\Database::connect();
+        $regimeModel = new \App\Models\RegimeModel();
+        $mouvementModel = new \App\Models\MouvementModel();
+
+        // Récupérer le prix
+        $prixRow = null;
+        $dureeSelectionnee = null;
+
+        // Priorité : nombre de jours choisi par l'utilisateur
+        if ($nombreJours && $nombreJours > 0) {
+            // 1) durée exacte
+            $prixRow = $db->table('diet_prix')
+                ->where('id_diet', $dietId)
+                ->where('duree', $nombreJours)
+                ->get()->getRowArray();
+
+            // 2) sinon, prendre le premier palier supérieur
+            if (!$prixRow) {
+                $prixRow = $db->table('diet_prix')
+                    ->where('id_diet', $dietId)
+                    ->where('duree >=', $nombreJours)
+                    ->orderBy('duree', 'ASC')
+                    ->limit(1)
+                    ->get()->getRowArray();
+            }
+
+            // 3) sinon, prendre la durée maximale disponible pour ce régime
+            if (!$prixRow) {
+                $prixRow = $db->table('diet_prix')
+                    ->where('id_diet', $dietId)
+                    ->orderBy('duree', 'DESC')
+                    ->limit(1)
+                    ->get()->getRowArray();
+            }
+
+            if ($prixRow) {
+                $dureeSelectionnee = (int)$prixRow['duree'];
+            }
+        } elseif ($prixId) {
+            $prixRow = $regimeModel->getPriceById($prixId);
+            if ($prixRow) {
+                $dureeSelectionnee = (int)$prixRow['duree'];
+            }
+        } else {
+            $prixRow = $regimeModel->getPriceForDuration($dietId, $dureeDefault);
+            if ($prixRow) {
+                $dureeSelectionnee = (int)$prixRow['duree'];
+            }
+        }
+
+        if (!$prixRow) return ['success' => false, 'message' => 'Tarif introuvable pour ce régime.'];
+
+        $montantBrut = (float)$prixRow['prix'];
+        $montantPaye = $montantBrut;
+
+        // Vérifier si l'utilisateur est Gold et récupérer la remise
+        $remiseGold = 0;
+        if ($this->isGold($userId)) {
+            // Récupérer la remise Gold actuelle depuis la table gold
+            $goldConfig = $db->table('gold')->orderBy('date_update', 'DESC')->limit(1)->get()->getRowArray();
+            if ($goldConfig) {
+                $percent = (float)$goldConfig['percent'];
+                $remiseGold = 1;
+                $montantPaye = $montantBrut - ($montantBrut * ($percent / 100));
+            }
+        }
+
+        // Calculer nouveau solde
+        $soldeActuel = $this->getSoldeActuelle($userId);
+
+
+        if ($soldeActuel < $montantPaye || $soldeActuel <= 0) {
+            return ['success' => false, 'message' => 'Solde insuffisant pour souscrire à ce régime.'];
+        }
+
+        $nouveauSolde = $soldeActuel - $montantPaye;
+
+        $db->transStart();
+        try {
+            // Insérer abonnement (conserver nombre_jour pour faciliter le calcul côté application)
+            $insertData = [
+                'id_user' => $userId,
+                'id_diet_prix' => $prixRow['id'],
+                'date_debut' => date('Y-m-d'),
+                'prix_paye' => $montantPaye,
+                'remise_gold' => $remiseGold,
+            ];
+            if ($dureeSelectionnee !== null) {
+                $insertData['nombre_jour'] = $dureeSelectionnee;
+            }
+
+            $insert = $db->table('user_diet')->insert($insertData);
+
+            // Ajouter mouvement (DEBIT)
+            $desc = 'Souscription Régime ' . ($db->table('diet')->where('id', $dietId)->get()->getRow()->nom ?? '');
+            $mouvementModel->addDebit($userId, $montantPaye, $nouveauSolde, $desc);
+
+            $db->transComplete();
+            if ($db->transStatus() === false) {
+                return ['success' => false, 'message' => 'Erreur lors de la transaction.'];
+            }
+
+            return ['success' => true, 'message' => 'Abonnement créé.'];
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return ['success' => false, 'message' => 'Erreur serveur : ' . $e->getMessage()];
+        }
     }
 }

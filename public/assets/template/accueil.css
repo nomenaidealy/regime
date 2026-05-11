@@ -159,3 +159,36 @@
 .hero-badge i       { font-size: 14px; }
 .gold-tag i         { font-size: 13px; color: #FFD700; }
 .feat-num           { font-size: 17px; } /* chiffres restent en texte */
+
+
+/* ── Fix nav fixe ─────────────────────────────────────────────── */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+  padding-top: 72px; /* ← hauteur de ta nav, ajuste si besoin */
+}
+
+/* ── Le contenu prend tout l'espace disponible ────────────────── */
+main,
+.content-wrapper,
+section {
+  flex: 1;
+}
+
+/* ── Footer toujours en bas ───────────────────────────────────── */
+footer {
+  margin-top: auto;
+}
+
+/* ── Nav fixe en haut ─────────────────────────────────────────── */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #fff;          /* ou la couleur de ta nav */
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}

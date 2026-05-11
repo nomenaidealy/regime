@@ -1,29 +1,29 @@
 <?= $this->extend('layout') ?>
 
-<?= $this->section('title') ?>NutriPlan — Mon tableau de bord<?= $this->endSection() ?>
+<?= $this->section('title') ?>NutriPlan — Mon profil<?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
-<link href="<?= base_url('assets/template/regimeForm.css') ?>" rel="stylesheet">">
+<link href="<?= base_url('assets/template/regimeForm.css') ?>" rel="stylesheet">
 
 <div class="regime-container">
 
   <div class="regime-left">
     <div class="logo">Nutri<span>Plan</span></div>
     <div>
-      <h2>Mon compte</h2>
-      <p>Informations personnelles et abonnements.</p>
+      <h2>Mon profil</h2>
+      <p>Vue complète de vos informations et de votre statut.</p>
     </div>
     <div class="regime-left-bottom">
-      <a href="<?= base_url('/') ?>"><i class="bi bi-arrow-left"></i> Retour</a>
+      <a href="<?= base_url('dashboard') ?>"><i class="bi bi-arrow-left"></i> Retour</a>
     </div>
   </div>
 
   <div class="regime-right">
     <div class="form-header">
       <div class="tag">Mon espace</div>
-      <h1>Tableau de bord</h1>
-      <p>Résumé rapide de votre profil.</p>
+      <h1>Profil utilisateur</h1>
+      <p>Consultez votre statut Gold et vos informations personnelles.</p>
     </div>
 
     <div style="display:flex; gap:20px; margin-bottom:18px;">
@@ -34,6 +34,13 @@
         <p><strong>Genre :</strong> <?= esc($user['genre']) ?></p>
         <p><strong>IMC :</strong> <?= esc($imc) ?></p>
         <p><strong>Objectif :</strong> <?= esc($objectif ? $objectif->libelle : '—') ?></p>
+        <p><strong>Valeur cible :</strong> <?= $objectif && isset($objectif->valeur_objectif) ? esc(number_format($objectif->valeur_objectif, 2)) : '—' ?></p>
+
+        <div style="margin-top:14px; padding:14px; border:2px solid #1a73e8; border-radius:12px; background:#eef5ff;">
+          <div style="font-size:13px; font-weight:700; color:#1a73e8; text-transform:uppercase; margin-bottom:8px;">Régime conseillé</div>
+          <p style="margin:0 0 6px 0;"><strong>Régime à suivre :</strong> <?= esc($regimeActuel ? $regimeActuel->diet_nom : '—') ?></p>
+          <p style="margin:0;"><strong>Durée :</strong> <?= esc($regimeActuel ? $regimeActuel->duree . ' jours' : '—') ?></p>
+        </div>
       </div>
 
       <div style="flex:1 1 300px; background:#fff; padding:18px; border-radius:12px;">

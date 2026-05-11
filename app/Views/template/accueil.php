@@ -142,14 +142,23 @@
     </div>
   </div>
   <div>
+    <div>
     <div class="gold-card">
       <div class="gc-label">Accès Premium</div>
       <div class="gc-title">Option Gold</div>
       <div class="gc-sub">Paiement unique — valable à vie</div>
-      <div class="gc-price"><small>Ar </small>150 000</div>
-      <div class="gc-note">15% de remise permanente sur tous vos régimes</div>
-      <a href="<?= base_url('gold/activate') ?>" class="btn-gold">Activer l'option Gold</a>
+
+      <div class="gc-price">
+        <small>Ar </small><?= number_format($gold['prix'], 2, '.', ' ') ?>
     </div>
+    <div class="gc-note">
+        <?= ($gold['percent'] * 100) ?>% de remise permanente sur tous vos régimes
+    </div>
+      <a href="<?= session()->get('user_id') ? base_url('user/gold/activate') : base_url('login') ?>" class="btn-gold">
+        Activer l'option Gold
+      </a>
+    </div>
+</div>
   </div>
 </section>
 
