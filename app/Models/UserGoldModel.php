@@ -36,17 +36,7 @@ class UserGoldModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
-    // ────────────────────────────────────────
-    // GRANT USER TO GOLD
-    // ────────────────────────────────────────
-
-    /**
-     * Accorde le statut Gold à un utilisateur
-     * Insère un enregistrement dans user_gold_at_time avec la date actuelle
-     * 
-     * @param int $idUser L'ID de l'utilisateur
-     * @return int|string L'ID de l'enregistrement créé ou false en cas d'erreur
-     */
+  
     public function grantUserToGold($idUser, $idGold)
     {
         $data = [

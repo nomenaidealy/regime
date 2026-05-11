@@ -23,18 +23,7 @@ class NotificationAdminModel extends Model
         'date_lecture',
     ];
 
-    // ────────────────────────────────────────
-    // CRÉER UNE NOTIFICATION (universel)
-    // ────────────────────────────────────────
-
-    /**
-     * * Solution 2 : une seule méthode pour les 2 types.
-     * Le type détermine dans quelle table chercher le demande_id.
-     *
-     * @param int    $demandeId  ID dans demande_code_promo OU demande_gold
-     * @param string $message
-     * @param string $type      'CODE_PROMO' | 'DEMANDE_GOLD'
-     */
+    
     public function creerNotification(
         int    $demandeId,
         string $message,
@@ -49,14 +38,7 @@ class NotificationAdminModel extends Model
         ]);
     }
 
-    // ────────────────────────────────────────
-    // MARQUER COMME LUE
-    // ────────────────────────────────────────
 
-    /**
-     * * Solution 2 : on filtre par type + demande_id
-     * pour éviter les collisions (un id=1 existe dans les 2 tables).
-     */
     public function marquerLue(int $demandeId, string $type): bool
     {
         return (bool) $this->where('id_demande', $demandeId)
@@ -68,14 +50,6 @@ class NotificationAdminModel extends Model
             ->update();
     }
 
-    // ────────────────────────────────────────
-    // NOTIFICATIONS NON LUES AVEC DÉTAILS
-    // ────────────────────────────────────────
-
-    /**
-     * * Solution 2 : UNION des 2 types pour afficher
-     * toutes les notifs dans un seul panel admin.
-     */
     public function getNonLues(): array
 {
     // * n.id_demande (pas n.demande_id)
@@ -130,18 +104,11 @@ class NotificationAdminModel extends Model
         ORDER BY date_creation DESC
     ")->getResultArray();
 }
-    // ────────────────────────────────────────
-    // COMPTER LES NON LUES
-    // ────────────────────────────────────────
-
+    
     public function countNonLues(): int
     {
         return $this->where('lue', 0)->countAllResults();
     }
-
-    // ────────────────────────────────────────
-    // NON LUES PAR TYPE (optionnel)
-    // ────────────────────────────────────────
 
     public function countNonLuesParType(): array
     {

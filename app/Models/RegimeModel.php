@@ -125,13 +125,7 @@ class RegimeModel extends Model
 
     
 
-    /**
-     * Retourne les suggestions de régimes adaptées à un utilisateur (filtrées)
-     * @param float $userWeight
-     * @param float $userHeight
-     * @param object|null $objectif (row de user_objectif join objectif)
-     * @return array
-     */
+
     public function getSuggestionsForUser(float $userWeight, float $userHeight, $objectif = null): array
     {
         $db = \Config\Database::connect();

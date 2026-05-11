@@ -11,11 +11,7 @@ class ObjectifModel extends Model
     protected $returnType = 'object';
     protected $allowedFields = ['id_user', 'id_objectif', 'valeur_objectif', 'date_choix'];
 
-    /**
-     * Retourne le dernier objectif choisi par un utilisateur (join avec la table `objectif`).
-     * @param int $userId
-     * @return object|null
-     */
+   
     public function getLatestForUser(int $userId)
     {
         $db = \Config\Database::connect();

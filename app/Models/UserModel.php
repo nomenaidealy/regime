@@ -38,15 +38,7 @@ class UserModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
-    // ─────────────────────────────────────────
-    // WIZARD INSCRIPTION - VALIDATION PAR ÉTAPES
-    // ─────────────────────────────────────────
 
-    /**
-     * Valide l'étape 1 du wizard: infos personnelles
-     * @param array $data Contient: nom, email, genre
-     * @return array ['valid' => bool, 'errors' => array]
-     */
     public function validateStep1($data)
     {
         $rules = [
@@ -271,12 +263,7 @@ class UserModel extends Model
         ];
     }
 
-    /**
-     * Retourne les données nécessaires pour la page Profil
-     * inclut user, imc, objectif, solde, isGold et dernier régime souscrit
-     * @param int $userId
-     * @return array
-     */
+   
     public function getProfilData(int $userId): array
     {
         $db = \Config\Database::connect();
@@ -313,17 +300,7 @@ class UserModel extends Model
         ];
     }
 
-    /**
-     * Souscrire un utilisateur à un régime :
-     * - crée un mouvement DEBIT
-     * - insère la ligne dans user_diet
-     * Ne gère pas encore la remise Gold (TODO)
-     * @param int $userId
-     * @param int $dietId
-     * @param int|null $prixId
-     * @param int $dureeDefault
-     * @return array ['success'=>bool,'message'=>string]
-     */
+  
     public function subscribeToRegime(int $userId, int $dietId, ?int $prixId = null, ?int $nombreJours = null, int $dureeDefault = 30): array
     {
         $db = \Config\Database::connect();
