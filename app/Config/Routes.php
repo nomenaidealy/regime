@@ -35,6 +35,7 @@ $routes->get('codepromo/mesDemandes',    'CodePromoController::mesDemandes');
 
 $routes->group('user', ['filter' => 'user'], static function ($routes) {
 	$routes->get('mes-regimes', 'UserController::mesRegimes');
+	$routes->get('mes-regimes/export', 'UserController::exportMesRegimes');
 	$routes->get('mes-regimes/(:num)', 'UserController::regimeDetails/$1');
 	$routes->post('mes-regimes/souscrire/(:num)', 'UserController::souscrire/$1');
 	$routes->get('dashboard', 'UserController::dashboard');

@@ -24,6 +24,11 @@
       <div class="tag">Mon espace</div>
       <h1>Mes régimes</h1>
       <p>Consultez les suggestions adaptées à votre profil et la liste de vos abonnements.</p>
+      <div style="margin-top:10px;">
+        <a href="<?= base_url('user/mes-regimes/export') ?>" style="display:inline-flex; align-items:center; gap:8px; background:#0d6efd; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
+          <i class="bi bi-file-earmark-pdf"></i> Exporter en PDF
+        </a>
+      </div>
     </div>
 
     <?php if (session()->getFlashdata('error')): ?>
@@ -64,50 +69,39 @@
       <?php if (empty($suggestions)): ?>
         <div>Aucune suggestion de régime disponible.</div>
       <?php else: ?>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:16px;">
-          <?php foreach ($suggestions as $s): ?>
-            <div style="border:1px solid #e8eef7; border-radius:14px; padding:16px; background:#fdfefe; box-shadow:0 2px 8px rgba(0,0,0,.03);">
-              <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
-                <div>
-                  <h4 style="margin:0 0 8px 0;"><?= esc($s['diet_nom']) ?></h4>
-                  <div style="font-size:13px; color:#667; margin-bottom:8px;">
-                    <?= esc($s['sport_libelle'] ?: 'Sans activité associée') ?>
-                  </div>
-                </div>
-                <div style="background:#eef5ff; color:#1a73e8; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px;">
-                  <?= isset($s['prix_30']) ? number_format($s['prix_30'], 2) . ' €' : '—' ?>
-                </div>
-              </div>
-
-              <p style="margin:0 0 10px 0; color:#555; min-height:42px;">
-                <?= esc(mb_strimwidth($s['diet_description'] ?? '', 0, 90, '...')) ?>
-              </p>
-
-              <div style="font-size:13px; color:#555; line-height:1.6;">
-                <div><strong>Variation :</strong> <?= esc($s['variation_poids_jour']) ?> kg / jour</div>
-                <div><strong>Composition :</strong> V <?= esc($s['viande_percent']) ?>% • O <?= esc($s['volaille_percent']) ?>% • P <?= esc($s['poisson_percent']) ?>%</div>
-              </div>
-
-              <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                <div style="font-size:13px; color:#333;">
-                  <?php if ($s['jours_estimes'] === 0): ?>
-                    <div style="font-weight:700; color:#1a73e8;">Objectif déjà atteint</div>
-                  <?php elseif ($s['possible']): ?>
-                    <div style="font-weight:700; color:#1a73e8;">Durée estimée pour vous : <?= esc($s['jours_estimes']) ?> jours</div>
-                  <?php else: ?>
-                    <div style="font-weight:700; color:#a94442;">Non recommandé pour votre objectif</div>
-                  <?php endif; ?>
-                </div>
-
-                <div style="display:flex; gap:8px; align-items:center;">
-                  <a href="<?= base_url('user/mes-regimes/' . $s['diet_id']) ?>" style="display:inline-flex; align-items:center; gap:8px; background:#1a73e8; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
-                    <i class="bi bi-eye"></i> Détails
-                  </a>
-
-                </div>
-              </div>
-            </div>
-          <?php endforeach; ?>
+        <div style="overflow:auto;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="text-align:left; border-bottom:1px solid #e6e6e6;">
+                <th style="padding:8px">Régime</th>
+                <th style="padding:8px">Sport</th>
+                <th style="padding:8px">Description</th>
+                <th style="padding:8px">Prix</th>
+                <th style="padding:8px">Variation</th>
+                <th style="padding:8px">Composition</th>
+                <th style="padding:8px">Jours estimés</th>
+                <th style="padding:8px">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($suggestions as $s): ?>
+                <tr style="border-bottom:1px solid #f0f0f0;">
+                  <td style="padding:8px"><?= esc($s['diet_nom']) ?></td>
+                  <td style="padding:8px"><?= esc($s['sport_libelle'] ?: '—') ?></td>
+                  <td style="padding:8px"><?= esc(mb_strimwidth($s['diet_description'] ?? '', 0, 120, '...')) ?></td>
+                  <td style="padding:8px"><?= isset($s['prix_30']) ? number_format($s['prix_30'],2) . ' €' : '—' ?></td>
+                  <td style="padding:8px"><?= esc($s['variation_poids_jour']) ?> kg/j</td>
+                  <td style="padding:8px">V <?= esc($s['viande_percent']) ?>% • O <?= esc($s['volaille_percent']) ?>% • P <?= esc($s['poisson_percent']) ?>%</td>
+                  <td style="padding:8px"><?php if ($s['jours_estimes'] === 0): ?>Objectif atteint<?php elseif ($s['possible']): ?><?= esc($s['jours_estimes']) ?> jours<?php else: ?>Non recommandé<?php endif; ?></td>
+                  <td style="padding:8px">
+                    <a href="<?= base_url('user/mes-regimes/' . $s['diet_id']) ?>" style="display:inline-flex; align-items:center; gap:8px; background:#1a73e8; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
+                      <i class="bi bi-eye"></i> Détails
+                    </a>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
         </div>
       <?php endif; ?>
     </div>

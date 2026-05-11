@@ -6,6 +6,7 @@ use App\Models\UserModel;
 use App\Models\UserObjectifModel;
 use App\Models\CodePromoModel;
 use App\Models\MouvementModel;
+use App\Models\UserExportModel;
 use CodeIgniter\Controller;
 
 
@@ -216,6 +217,30 @@ class UserController extends Controller
         if (empty($data)) return redirect()->to('login')->with('error', 'Utilisateur introuvable.');
 
         return view('template/user/profil', $data);
+    }
+
+    /**
+     * Exporter la liste des suggestions et abonnements en PDF
+     */
+    public function exportMesRegimes()
+    {
+        $userId = session()->get('user_id');
+        if (!$userId) return redirect()->to('login')->with('error', 'Connectez-vous pour exporter.');
+
+        $userModel = new UserModel();
+        $data = $userModel->getMesRegimesData($userId);
+        if (empty($data)) return redirect()->to('/user/mes-regimes')->with('error', 'Aucune donnée à exporter.');
+
+        $user = $data['user'] ?? ['nom' => 'Utilisateur'];
+        $suggestions = $data['suggestions'] ?? [];
+        $subscriptions = $data['subscriptions'] ?? [];
+
+        $exportModel = new UserExportModel();
+        $pdf = $exportModel->generatePdf($user, $suggestions, $subscriptions);
+
+        return $this->response->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="mes-regimes.pdf"')
+            ->setBody($pdf);
     }
 
 }
