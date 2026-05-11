@@ -433,9 +433,16 @@ async function submitForm() {
   formData.append('genre', document.querySelector('input[name="genre"]:checked').value);
   formData.append('taille', document.getElementById('taille').value);
   formData.append('poids', document.getElementById('poids').value);
-  formData.append('mdp', mdp);
   formData.append('objectif', document.querySelector('input[name="objectif"]:checked').value);
-  formData.append('valeur_objectif', document.getElementById('valeur_objectif').value || 0);
+  
+  // Ajouter valeur_objectif seulement si ce n'est pas l'objectif 3 (IMC idéal)
+  const objectifChoisi = document.querySelector('input[name="objectif"]:checked').value;
+  if (objectifChoisi !== '3') {
+    const valeurObjectif = document.getElementById('valeur_objectif').value;
+    if (valeurObjectif) {
+      formData.append('valeur_objectif', valeurObjectif);
+    }
+  }
 
   const response = await fetch('<?= base_url("api/complete-inscription") ?>', {
     method: 'POST',

@@ -48,7 +48,7 @@
 
 						<div class="field">
 							<label>Adresse email</label>
-							<input type="email" name="email" id="email" placeholder="Votre email" required>
+							<input type="email" name="email" id="email" placeholder="Votre email" required value="alice@example.com">
 							<div class="err-msg" id="emailError" style="display:none;color:#A32D2D;margin-top:5px;"></div>
 							<?php if (session('errors.email')): ?>
 								<div class="err-msg" style="color:#A32D2D;"><?= session('errors.email') ?></div>
@@ -58,7 +58,7 @@
 				<div class="field">
 					<label>Mot de passe</label>
 					<div class="pwd-wrapper">
-						<input type="password" name="mdp" id="mdp" placeholder="Votre mot de passe" required>
+						<input type="password" name="mdp" id="mdp" placeholder="Votre mot de passe" required value="alice123">
 						<button class="pwd-toggle" type="button" onclick="togglePwd('mdp', this)"><i class="bi bi-eye"></i></button>
 					</div>
 					<?php if (session('errors.mdp')): ?>

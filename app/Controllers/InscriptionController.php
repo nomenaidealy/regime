@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
+use App\Models\UserObjectifModel;
 use CodeIgniter\Controller;
 
 class InscriptionController extends Controller
@@ -42,6 +43,7 @@ class InscriptionController extends Controller
             'taille'   => $this->request->getPost('taille'),
             'poids'    => $this->request->getPost('poids'),
             'objectif' => $this->request->getPost('objectif'),
+            'valeur_objectif' => $this->request->getPost('valeur_objectif'),
         ];
         $userModel = new UserModel();
         $result = $userModel->validateStep2($data);
@@ -91,6 +93,33 @@ class InscriptionController extends Controller
             }
             return $this->response->setJSON(['success' => false, 'message' => $msg]);
         }
+
+        // Insérer l'objectif
+        $userObjectifModel = new UserObjectifModel();
+        
+        // Déterminer la valeur de l'objectif selon le choix
+        $objectifId = (int)$data['objectif'];
+        $valeurObjectif = null;
+        
+        if ($objectifId === 3) {
+            // Objectif 3 = "Atteindre son IMC idéal" → valeur = 22.5
+            $valeurObjectif = 22.5;
+        } elseif (!empty($data['valeur_objectif'])) {
+            // Objectifs 1 ou 2 → prendre la valeur saisie
+            $valeurObjectif = (float)$data['valeur_objectif'];
+        }
+        
+        $objectifResult = $userObjectifModel->insertObjectif(
+            $userId, 
+            $objectifId, 
+            $valeurObjectif
+        );
+        
+        if (!$objectifResult) {
+            // L'utilisateur a été créé mais l'objectif n'a pas pu être inséré
+            return $this->response->setJSON(['success' => false, 'message' => 'Erreur lors de l\'enregistrement de l\'objectif']);
+        }
+
         session()->set([
             'user_id'    => $userId,
             'user_nom'   => $data['nom'],
