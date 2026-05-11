@@ -84,14 +84,11 @@ class RegimeController extends BaseController
         if (!is_array($durees)) $durees = [$durees];
         if (!is_array($prixs))  $prixs  = [$prixs];
 
-        if (count($durees) !== count($prixs)) {
-            return redirect()->back()->withInput()->with('error', 'Incohérence entre durées et prix fournis.');
-        }
-
+       
         $priceRows = [];
 
         // Valider chaque paire
-        for ($i = 0; $i < count($durees); $i++) {
+        for ($i = 0; $i < count($durees)-1; $i++) {
             $rawD = $durees[$i];
             $rawP = $prixs[$i] ?? null;
             $d = intval($rawD);
@@ -170,13 +167,10 @@ class RegimeController extends BaseController
         if (!is_array($durees)) $durees = [$durees];
         if (!is_array($prixs))  $prixs  = [$prixs];
 
-        if (count($durees) !== count($prixs)) {
-            return redirect()->back()->withInput()->with('error', 'Incohérence entre durées et prix fournis.');
-        }
 
         $priceRows = [];
 
-        for ($i = 0; $i < count($durees); $i++) {
+        for ($i = 0; $i < count($durees)-1; $i++) {
             $rawD = $durees[$i];
             $rawP = $prixs[$i] ?? null;
             $d = intval($rawD);
