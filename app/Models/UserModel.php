@@ -95,8 +95,9 @@ class UserModel extends Model
             'taille'  => 'required|numeric|greater_than[0]',
             'poids'   => 'required|numeric|greater_than[0]',
             'objectif' => 'required|is_natural_no_zero',
+            'valeur_objectif' => 'numeric|greater_than_equal_to[0]' 
         ];
-
+        log_message('valeur_objectif', '$data["valeur_objectif"]: ' . $data['valeur_objectif']); // Debug dans les logs
         $messages = [
             'taille'  => ['required' => 'La taille est obligatoire', 'numeric' => 'Valeur numérique requise'],
             'poids'   => ['required' => 'Le poids est obligatoire', 'numeric' => 'Valeur numérique requise'],
