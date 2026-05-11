@@ -46,13 +46,13 @@
 
       <div class="field">
         <label>Login</label>
-        <input type="text" name="login" placeholder="Votre login admin" required>
+        <input type="text" name="login" placeholder="Votre login admin" required value="superadmin">
       </div>
 
       <div class="field">
         <label>Mot de passe</label>
         <div class="pwd-wrapper">
-          <input type="password" name="mdp" placeholder="Votre mot de passe" required>
+          <input type="password" name="mdp" placeholder="Votre mot de passe" required value="admin2026">
         </div>
       </div>
 
