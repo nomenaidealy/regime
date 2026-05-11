@@ -29,11 +29,11 @@ INSERT INTO diet (nom, description, variation_poids_jour,
 
 -- 5. PRIX
 INSERT INTO diet_prix (id_diet, duree, prix) VALUES
-(1, 30, 29.99), (1, 60, 49.99), (1, 90, 69.99),
-(2, 30, 24.99), (2, 60, 44.99),
-(3, 30, 34.99), (3, 90, 79.99),
-(4, 30, 27.50),
-(5, 30, 19.99), (5, 60, 34.99);
+(1, 30, 119960), (1, 60, 199960), (1, 90, 279960),
+(2, 30, 99960), (2, 60, 179960),
+(3, 30, 139960), (3, 90, 319960),
+(4, 30, 110000),
+(5, 30, 79960), (5, 60, 139960);
 
 -- 6. USERS
 INSERT INTO users (nom, email, genre, mdp, taille, poids) VALUES
@@ -45,7 +45,7 @@ INSERT INTO users (nom, email, genre, mdp, taille, poids) VALUES
 
 
 INSERT INTO gold(prix ,percent , date_update) VALUES 
-(150000 ,0.15 , '2026-04-01 10:00:00') ;
+(600000 ,0.15 , '2026-04-01 10:00:00') ;
 -- 7. GOLD
 INSERT INTO user_gold_at_time (id_user, id_gold, date_achat_gold) VALUES
 (2, 1, '2026-04-01 10:00:00'),
@@ -54,38 +54,38 @@ INSERT INTO user_gold_at_time (id_user, id_gold, date_achat_gold) VALUES
 -- 8. MOUVEMENTS
 -- Soldes initiaux
 INSERT INTO mouvement (id_user, montant, type, montant_apres, description) VALUES
-(1, 30.00,  'CREDIT', 30.00,  'Recharge initiale'),
-(2, 50.00,  'CREDIT', 50.00,  'Recharge initiale'),
-(3, 10.00,  'CREDIT', 10.00,  'Recharge initiale'),
-(5, 100.00, 'CREDIT', 100.00, 'Recharge initiale');
+(1, 120000,  'CREDIT', 120000,  'Recharge initiale'),
+(2, 200000,  'CREDIT', 200000,  'Recharge initiale'),
+(3, 40000,   'CREDIT', 40000,   'Recharge initiale'),
+(5, 400000,  'CREDIT', 400000,  'Recharge initiale');
 
 -- Achats régimes (DEBIT)
 INSERT INTO mouvement (id_user, montant, type, montant_apres, description) VALUES
-(2, 42.49, 'DEBIT',  7.51,  'Souscription Régime Équilibré 60j (remise gold -15%)'),
-(5, 29.99, 'DEBIT',  70.01, 'Souscription Régime Perte Rapide 30j'),
-(1, 24.99, 'DEBIT',  5.01,  'Souscription Régime Équilibré 30j');
+(2, 169960, 'DEBIT',  30040,   'Souscription Régime Équilibré 60j (remise gold -15%)'),
+(5, 119960, 'DEBIT',  280040,  'Souscription Régime Perte Rapide 30j'),
+(1, 99960,  'DEBIT',  20040,   'Souscription Régime Équilibré 30j');
 
 -- Crédit code promo validé (Chloé, après validation admin)
 INSERT INTO mouvement (id_user, montant, type, montant_apres, description) VALUES
-(3, 10.00, 'CREDIT', 20.00, 'Code promo PROMO10 validé par admin');
+(3, 40000, 'CREDIT', 80000, 'Code promo PROMO10 validé par admin');
 
 -- 9. CODES PROMO
 INSERT INTO code_promo (code, montant) VALUES
-('PROMO10',   10.00),
-('WELCOME5',   5.00),
-('SPRING15',  15.00),
-('GOLD20',    20.00),
-('SUMMER7',    7.00),
-('FREEMONTH', 30.00),
-('SAVE50',    50.00),
-('SAVE3',      3.00),
-('GET10',     10.00),
-('TRIAL25',   25.00),
-('CODE1',      1.00),
-('CODE2',      2.00),
-('CODE3',      3.00),
-('CODE4',      4.00),
-('CODE5',      5.00);
+('PROMO10',   40000),
+('WELCOME5',  20000),
+('SPRING15',  60000),
+('GOLD20',    80000),
+('SUMMER7',   28000),
+('FREEMONTH', 120000),
+('SAVE50',    200000),
+('SAVE3',     12000),
+('GET10',     40000),
+('TRIAL25',   100000),
+('CODE1',     4000),
+('CODE2',     8000),
+('CODE3',     12000),
+('CODE4',     16000),
+('CODE5',     20000);
 
 -- 10. OBJECTIFS UTILISATEUR
 INSERT INTO user_objectif (id_user, id_objectif, valeur_objectif) VALUES
@@ -95,9 +95,9 @@ INSERT INTO user_objectif (id_user, id_objectif, valeur_objectif) VALUES
 
 -- 11. SOUSCRIPTIONS RÉGIME
 INSERT INTO user_diet (id_user, id_diet_prix, date_debut, prix_paye, remise_gold) VALUES
-(2, 2, '2026-04-02', 42.49, 1),   -- Bob, gold, -15% sur 44.99
-(5, 1, '2026-03-16', 29.99, 0),   -- Eva, gold mais pas de remise appliquée
-(1, 4, '2026-04-15', 24.99, 0);   -- Alice, sans remise
+(2, 2, '2026-04-02', 169960, 1),   -- Bob, gold, -15% sur 199960
+(5, 1, '2026-03-16', 119960, 0),   -- Eva, gold mais pas de remise appliquée
+(1, 4, '2026-04-15', 99960, 0);    -- Alice, sans remise
 
 -- 12. DEMANDES CODE PROMO
 -- Chloé (user 3) → PROMO10 → VALIDÉ
@@ -120,18 +120,18 @@ VALUES (1, 2, 'EN_ATTENTE');
 INSERT INTO notification_admin
     (id_admin, type, id_demande, message, lue, date_lecture)
 VALUES (NULL, 'CODE_PROMO', 1,
-        'Chloé Bernard a soumis le code PROMO10 (10.00)',
+        'Chloé Bernard a soumis le code PROMO10 (40000 Ar)',
         1, '2026-04-10 09:00:00');
 
 -- Notif pour la demande de David (traitée, lue)
 INSERT INTO notification_admin
     (id_admin, type, id_demande, message, lue, date_lecture)
 VALUES (NULL, 'CODE_PROMO', 2,
-        'David Moreau a soumis le code GOLD20 (20.00)',
+        'David Moreau a soumis le code GOLD20 (80000 Ar)',
         1, '2026-04-11 14:00:00');
 
 -- Notif pour la demande d'Alice (non traitée, non lue)
 INSERT INTO notification_admin
     (id_admin, type, id_demande, message)
 VALUES (NULL, 'CODE_PROMO', 3,
-        'Alice Martin a soumis le code WELCOME5 (5.00)');
+        'Alice Martin a soumis le code WELCOME5 (20000 Ar)');
